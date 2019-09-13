@@ -1,13 +1,36 @@
 #include <ESP8266WiFi.h>
 #include <ESP8266WebServer.h>
 #include <WiFiClient.h> 
-#include <Wire.h>
+#include <MCP23017.h>
 
 
 const char *ssid = "SternenhimmelAP";
 const char *password = "SternenhimmelAP";
 
 ESP8266WebServer server(80);
+
+/*
+MCP23017 mcp1 = MCP23017(0x20);
+MCP23017 mcp2 = MCP23017(0x21);
+MCP23017 mcp3 = MCP23017(0x22);
+MCP23017 mcp4 = MCP23017(0x23);
+MCP23017 mcp5 = MCP23017(0x24);
+MCP23017 mcp6 = MCP23017(0x25);
+MCP23017 mcp7 = MCP23017(0x26);
+MCP23017 mcp8 = MCP23017(0x27);
+*/
+
+MCP23017 mcp_objects[8] = {
+ MCP23017(0x20),
+ MCP23017(0x21),
+ MCP23017(0x22),
+ MCP23017(0x23),
+ MCP23017(0x24),
+ MCP23017(0x25),
+ MCP23017(0x26),
+ MCP23017(0x27)
+};
+
 
 void handleRoot() {
   server.send(200, "text/html", "<h1>You are connected.</h1>");
