@@ -3,6 +3,7 @@
 #include <WiFiClient.h>
 #include <MCP23017.h>
 #include <Wire.h>
+#include <math.h>
 
 
 const char *DIVIDER = "<=====================================>";
@@ -47,6 +48,47 @@ TIMING timings;
     timing_example='10.0.0.1:80/timing?offset=0.5&pulse=0.9&pause=0.5&count=4&stay=16.0'
 */
 
+/*
+def translate_output(self, number):
+    # Reverse number
+    number = [i for i in range(1, 109)][-number]
+    
+    rj45_connector_number = math.ceil(number / 6)
+    rj45_connector_pin = number - (rj45_connector_number-1)*6
+    
+    pseudo_rj_45_connector_pin = [i for i in range(1, 7)][-rj45_connector_pin]
+    pseudo_pin_number = (rj45_connector_number - 1) * 6 + pseudo_rj_45_connector_pin
+    
+    mcp_number = math.ceil(pseudo_pin_number / 16)
+    pin_number = (pseudo_pin_number % 16)
+    pin_number = pseudo_pin_number - (mcp_number - 1) * 16
+
+    return mcp_number, pin_number
+*/
+
+int translate_output(int number, int result[])  {
+  // Reverse number
+  number = 121 - number;
+  //Serial.println(String(number));
+
+  int rj45_connector_number = ceil(float(number) / 6);
+  //Serial.println(String(rj45_connector_number));
+  int rj45_connector_pin = number - (rj45_connector_number-1)*6;
+  //Serial.println(String(rj45_connector_pin));
+
+  int range[] = {7,6,5,4,3,2,1};
+  int pseudo_rj_45_connector_pin = range[rj45_connector_pin-1];
+  //Serial.println(String(pseudo_rj_45_connector_pin));
+  int pseudo_pin_number = (rj45_connector_number - 1) * 6 + pseudo_rj_45_connector_pin;
+  //Serial.println(String(pseudo_pin_number));
+  
+  int mcp_number = ceil(float(pseudo_pin_number) / 16);
+  int pin_number = pseudo_pin_number - (mcp_number - 1) * 16;
+  //Serial.println(String(mcp_number) + " <-> " + String(pin_number));
+  result[0] = mcp_number;
+  result[1] = pin_number;
+}
+        
 
 bool play_show(bool reset_state=false) {
   
@@ -239,6 +281,19 @@ void setup() {
 
   // Setup Wifi Access Point
   setup_access_point();
+
+  /*
+  int result[2];
+  translate_output(1, result);
+  Serial.println(String(result[0]) + " <-> " + String(result[1]));
+  
+  translate_output(2);
+  translate_output(10);
+  translate_output(74);
+  translate_output(33);
+  translate_output(119);
+  translate_output(120);
+  */
 }
 
 
