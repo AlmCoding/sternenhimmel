@@ -252,5 +252,4 @@ void loop() {
   if(handleShow_flag == true) {
     handleShow_flag = play_show();
   }
-    
 }
