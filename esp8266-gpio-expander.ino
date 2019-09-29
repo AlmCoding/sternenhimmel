@@ -12,7 +12,7 @@ const char *password = "Sternenhimmel";
 
 ESP8266WebServer server(80);
 
-const int mcp_array_len = 1;
+const int mcp_array_len = 8;
 MCP23017 mcp_array[8] = {
  MCP23017(0x20),
  MCP23017(0x21),
@@ -29,6 +29,7 @@ bool handleRoot_flag = false;
 bool handleTest_flag = false;
 bool handleShow_flag = false;
 
+unsigned int show_number = 0;
 
 struct TIMING {
   int OFFSET;
@@ -40,61 +41,6 @@ struct TIMING {
 
 TIMING timings;
 
-
-/*
-    test_example='10.0.0.1:80/test',
-    show_example='10.0.0.1:80/show?number=3',
-    output_example='10.0.0.1:80/output?number=3,4',
-    timing_example='10.0.0.1:80/timing?offset=0.5&pulse=0.9&pause=0.5&count=4&stay=16.0'
-*/
-
-/*
-def translate_output(self, number):
-    # Reverse number
-    number = [i for i in range(1, 109)][-number]
-    
-    rj45_connector_number = math.ceil(number / 6)
-    rj45_connector_pin = number - (rj45_connector_number-1)*6
-    
-    pseudo_rj_45_connector_pin = [i for i in range(1, 7)][-rj45_connector_pin]
-    pseudo_pin_number = (rj45_connector_number - 1) * 6 + pseudo_rj_45_connector_pin
-    
-    mcp_number = math.ceil(pseudo_pin_number / 16)
-    pin_number = (pseudo_pin_number % 16)
-    pin_number = pseudo_pin_number - (mcp_number - 1) * 16
-
-    return mcp_number, pin_number
-*/
-
-int translate_output(int number, int result[])  {
-  // Reverse number
-  number = 121 - number;
-  //Serial.println(String(number));
-
-  int rj45_connector_number = ceil(float(number) / 6);
-  //Serial.println(String(rj45_connector_number));
-  int rj45_connector_pin = number - (rj45_connector_number-1)*6;
-  //Serial.println(String(rj45_connector_pin));
-
-  int range[] = {7,6,5,4,3,2,1};
-  int pseudo_rj_45_connector_pin = range[rj45_connector_pin-1];
-  //Serial.println(String(pseudo_rj_45_connector_pin));
-  int pseudo_pin_number = (rj45_connector_number - 1) * 6 + pseudo_rj_45_connector_pin;
-  //Serial.println(String(pseudo_pin_number));
-  
-  int mcp_number = ceil(float(pseudo_pin_number) / 16);
-  int pin_number = pseudo_pin_number - (mcp_number - 1) * 16;
-  //Serial.println(String(mcp_number) + " <-> " + String(pin_number));
-  result[0] = mcp_number;
-  result[1] = pin_number;
-}
-        
-
-bool play_show(bool reset_state=false) {
-  
-}
-
-
 enum Stages {
   one,
   two,
@@ -103,19 +49,74 @@ enum Stages {
   five
 };
 
-bool test_gpios(bool reset_state=false) {
+
+/*
+    test_example='10.0.0.1:80/test',
+    show_example='10.0.0.1:80/show?number=3',
+    output_example='10.0.0.1:80/output?number=3,4',
+    timing_example='10.0.0.1:80/timing?offset=0.5&pulse=0.9&pause=0.5&count=4&stay=16.0'
+*/
+
+
+int translate_output(int number, int result[])  {
+  /**
+   * number is range of [1..120]
+   * result[0] is range of [0..7]
+   * result[1] is range of [0..15]
+   */
+  
+  // Reverse number
+  number = 121 - number;
+  //Serial.println(String(number));
+
+  unsigned int mcp_offset = 0;
+  if (number > 60) {
+    number -= 60;
+    mcp_offset = 4;
+  }
+
+  int rj45_connector_number = ceil(float(number) / 6);
+  //Serial.println(String(rj45_connector_number));
+  int rj45_connector_pin = number - (rj45_connector_number-1)*6;
+  //Serial.println(String(rj45_connector_pin));
+
+  int range[] = {6,5,4,3,2,1};
+  int pseudo_rj_45_connector_pin = range[rj45_connector_pin-1];
+  //Serial.println(String(pseudo_rj_45_connector_pin));
+  int pseudo_pin_number = (rj45_connector_number - 1) * 6 + pseudo_rj_45_connector_pin;
+  //Serial.println(String(pseudo_pin_number));
+  
+  int mcp_number = ceil(float(pseudo_pin_number) / 16);
+  int pin_number = pseudo_pin_number - (mcp_number - 1) * 16;
+  Serial.println(String(mcp_number) + " <-> " + String(pin_number));
+  result[0] = mcp_offset + mcp_number-1;
+  result[1] = pin_number-1;
+}
+        
+
+bool play_show(bool run_function=true) {
+  static Stages play_show_stage = one;
+
+  // Reset function state
+  if(run_function == false) {
+    Serial.println("Reset play_show() function state.");
+    play_show_stage = one;
+    return false;
+  }
+}
+
+
+bool test_gpios(bool run_function=true) {
   static Stages tets_gpio_stage = one;
   static byte output = 0b10101010;
   static unsigned long start_time;
   static int toggle_counter = 0;
 
   // Reset function state
-  if(reset_state == true) {
-    Serial.println(DIVIDER);
-    Serial.println("Reset [test_gpios] function state.");
-    Serial.println(DIVIDER);
+  if(run_function == false) {
+    Serial.println("Reset test_gpios() function state.");
     tets_gpio_stage = one;
-    output = 0b10101010;
+    output = 0b11111111;
     toggle_counter = 0;
     return false;
   }
@@ -177,7 +178,7 @@ void handleTest() {
   server.send(200, "text/html", "<h1>Self test running ...</h1>");
   handleTest_flag = true;
   // Reset test_gpios function state
-  test_gpios(true);
+  test_gpios(false);
 }
 
 
@@ -215,9 +216,22 @@ void handleTiming() {
 
 
 void handleShow() {
-  server.send(200, "text/html", "<h1>Ok.</h1>");
+  Serial.println(DIVIDER);
+  Serial.println("Get Show [...]");
+  
+  Serial.println("Request arguments: ");
+  for(int i=0;i<server.args();i++) {
+    Serial.println(" - " + server.argName(i) + " = " + server.arg(i));
+    if(server.argName(i) == "number") {
+      show_number = server.arg(i).toInt();
+        handleShow_flag = true;
+        // Reset play_show function state
+        play_show(false);
+    }
+  }
+  Serial.println("Get Show [OK]");
+  server.send(200, "Ok.");
 }
-
 
 void setup_gpio_expanders() {
   Serial.println(DIVIDER);
@@ -279,21 +293,26 @@ void setup() {
   // Setup MCP23017 gpio expanders
   setup_gpio_expanders();
 
+  /*
+  for(int i=1; i<=120; i++) {
+    int result[2];
+    translate_output(i, result);
+
+    MCP23017 mcp = mcp_array[result[0]];
+    unsigned int value = 0x0001 << result[1];
+    byte A = value;
+    byte B = value >> 8;
+    mcp.writeRegister(MCP23017_REGISTER::GPIOA, A);
+    mcp.writeRegister(MCP23017_REGISTER::GPIOB, B);
+    delay(300);
+    write_gpios(0x00);
+  }
+
+   while(1);
+   */
+
   // Setup Wifi Access Point
   setup_access_point();
-
-  /*
-  int result[2];
-  translate_output(1, result);
-  Serial.println(String(result[0]) + " <-> " + String(result[1]));
-  
-  translate_output(2);
-  translate_output(10);
-  translate_output(74);
-  translate_output(33);
-  translate_output(119);
-  translate_output(120);
-  */
 }
 
 
