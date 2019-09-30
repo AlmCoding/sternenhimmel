@@ -41,15 +41,6 @@ struct TIMING {
 
 TIMING timings;
 
-enum Stages {
-  one,
-  two,
-  three,
-  four,
-  five
-};
-
-
 /*
     test_example='10.0.0.1:80/test',
     show_example='10.0.0.1:80/show?number=3',
@@ -89,25 +80,112 @@ int translate_output(int number, int result[])  {
   int mcp_number = ceil(float(pseudo_pin_number) / 16);
   int pin_number = pseudo_pin_number - (mcp_number - 1) * 16;
   Serial.println(String(mcp_number) + " <-> " + String(pin_number));
-  result[0] = mcp_offset + mcp_number-1;
-  result[1] = pin_number-1;
+  result[0] = mcp_offset + mcp_number - 1;
+  result[1] = pin_number - 1;
 }
         
 
+enum ShowStages {
+  _idle,
+  _pulse,
+  _pause,
+  _stay,
+};
+
 bool play_show(bool run_function=true) {
-  static Stages play_show_stage = one;
+  static ShowStages play_show_stage = _idle;
+  static unsigned long start_time;
+  static bool do_once = true;
+  static int pulse_counter = 0;
 
   // Reset function state
   if(run_function == false) {
     Serial.println("Reset play_show() function state.");
-    play_show_stage = one;
+    play_show_stage = _idle;
+    do_once = true;
+    pulse_counter = 0;
     return false;
   }
+
+  // Start
+  if(play_show_stage == _idle) {
+    Serial.println(DIVIDER);
+    Serial.println("Play Show [...]");
+    pulse_counter = 0;
+    play_show_stage = _pulse;
+  }
+
+  // Pulse
+  if(play_show_stage == _pulse) {
+    if(do_once == true) {
+      Serial.println("Set Pulse.");
+      // TODO set show
+      write_gpios(0xff);
+      start_time = millis();
+      pulse_counter++;
+      do_once = false;
+    } else {
+      if((millis() - start_time) > timings.PULSE) {
+        play_show_stage = _pause;
+        do_once = true;
+      }
+    }
+  }
+
+  // Pause
+  if(play_show_stage == _pause) {
+    if(do_once == true) {
+      Serial.println("Reset Pulse.");
+      write_gpios(0x00);
+      start_time = millis();
+      do_once = false;
+    } else {
+      if((millis() - start_time) > timings.PAUSE) {
+        if(pulse_counter >= timings.COUNT) {
+          play_show_stage = _stay;
+        } else {
+          play_show_stage = _pulse;
+        }
+        do_once = true;
+      }
+    }
+  }
+
+  // Stay
+  if(play_show_stage == _stay) {
+    if(do_once == true) {
+      Serial.println("Stay.");
+      // TODO set show
+      write_gpios(0xff);
+      start_time = millis();
+      do_once = false;
+    } else {
+      if((millis() - start_time) > timings.STAY) {
+        write_gpios(0x00);
+        play_show_stage = _idle;
+        do_once = true;
+        return false;
+      }
+    }
+  } 
+
+  // Get output numbers
+  //unsigned int outputs = [12, 10, 33, -1];
+  //while(*outputs > 0) {
+  //}
+
+  return true;
 }
 
 
+enum TestStages {
+  one,
+  two,
+  three
+};
+
 bool test_gpios(bool run_function=true) {
-  static Stages tets_gpio_stage = one;
+  static TestStages tets_gpio_stage = one;
   static byte output = 0b10101010;
   static unsigned long start_time;
   static int toggle_counter = 0;
@@ -289,6 +367,13 @@ void setup() {
   // Setup Serial and I2C Interface
   Serial.begin(9600);
   Wire.begin();
+
+  // Init timings struct with default values
+  timings.OFFSET = 500;
+  timings.PULSE = 900;
+  timings.PAUSE = 500;
+  timings.COUNT = 4;
+  timings.STAY = 16000;
 
   // Setup MCP23017 gpio expanders
   setup_gpio_expanders();
