@@ -14,19 +14,18 @@ ESP8266WebServer server(80);
 
 const int mcp_array_len = 8;
 MCP23017 mcp_array[8] = {
- MCP23017(0x20),
- MCP23017(0x21),
- MCP23017(0x22),
- MCP23017(0x23),
- MCP23017(0x24),
- MCP23017(0x25),
- MCP23017(0x26),
- MCP23017(0x27)
+  MCP23017(0x20),
+  MCP23017(0x21),
+  MCP23017(0x22),
+  MCP23017(0x23),
+  MCP23017(0x24),
+  MCP23017(0x25),
+  MCP23017(0x26),
+  MCP23017(0x27)
 };
 
 unsigned int mcp_output_array[8] = {0, 0, 0, 0, 0, 0, 0, 0};
-
-int outputs[32] = {1,2,3,100,-1};
+int outputs[32] = {-1};
 
 bool handleRoot_flag = false;
 bool handleTest_flag = false;
@@ -39,14 +38,32 @@ struct TIMING {
   int COUNT;
   int STAY;
 };
-
 TIMING timings;
 
 /*
-    test_example='10.0.0.1:80/test',
-    playback_example='10.0.0.1:80/playback?output=3,4',
-    timing_example='10.0.0.1:80/timing?offset=0.5&pulse=0.9&pause=0.5&count=4&stay=16.0'
+  test_example='10.0.0.1:80/test',
+  playback_example='10.0.0.1:80/playback?output=3,4',
+  timing_example='10.0.0.1:80/timing?offset=0.5&pulse=0.9&pause=0.5&count=4&stay=16.0'
 */
+
+
+void text2outputs(String output_string) {
+  Serial.println(output_string);
+  int start_idx = 0;
+  int end_idx = 0;
+  int idx = 0;
+  for(int i=0;i<output_string.length();i++) {
+    if(output_string[i] == ',') {
+      end_idx = i;
+      String element = output_string.substring(start_idx, end_idx);
+      Serial.println(element);
+      start_idx = i + 1;
+      outputs[idx] = element.toInt();
+      idx++;
+    }
+  }
+  outputs[idx] = -1;
+}
 
 
 int translate_output(int number, int result[])  {
@@ -79,7 +96,7 @@ int translate_output(int number, int result[])  {
   
   int mcp_number = ceil(float(pseudo_pin_number) / 16);
   int pin_number = pseudo_pin_number - (mcp_number - 1) * 16;
-  Serial.println(String(mcp_number) + " <-> " + String(pin_number));
+  //Serial.println(String(mcp_number) + " <-> " + String(pin_number));
   result[0] = mcp_offset + mcp_number - 1;
   result[1] = pin_number - 1;
 }
@@ -242,6 +259,7 @@ void write_mcps(unsigned int value) {
   }
 }
 
+
 void write_outputs() {
   unsigned int i = 0;
   while(1) {
@@ -322,7 +340,8 @@ void handlePlayback() {
   for(int i=0;i<server.args();i++) {
     Serial.println(" - " + server.argName(i) + " = " + server.arg(i));
     if(server.argName(i) == "output") {
-      //show_number = server.arg(i).toInt();
+      String value = server.arg(i);
+      text2outputs(value);   
       handlePlayback_flag = true;
       // Reset playback_sequence function state
       playback_sequence(false);
