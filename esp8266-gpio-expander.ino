@@ -41,14 +41,14 @@ struct TIMING {
 TIMING timings;
 
 /*
-  test_example='10.0.0.1:80/test',
-  playback_example='10.0.0.1:80/playback?output=3,4',
-  timing_example='10.0.0.1:80/timing?offset=0.5&pulse=0.9&pause=0.5&count=4&stay=16.0'
+  test='10.0.0.1:80/test',
+  output='10.0.0.1:80/output?number=3,4,',
+  timing='10.0.0.1:80/timing?offset=500&pulse=900&pause=500&count=4&stay=16000'
 */
-
 
 void text2outputs(String output_string) {
   Serial.println(output_string);
+  output_string += ',';
   int start_idx = 0;
   int end_idx = 0;
   int idx = 0;
@@ -182,7 +182,7 @@ bool playback_sequence(bool run_function=true) {
         return false;
       }
     }
-  } 
+  }
 
   return true;
 }
@@ -286,7 +286,7 @@ void write_outputs() {
 }
 
 void handleRoot() {
-  char json_response[] = "{\"test_example\":\"10.0.0.1:80/test\",\"show_example\":\"10.0.0.1:80/show?number=3\",\"output_example\":\"10.0.0.1:80/output?number=3,4\",\"timing_example\":\"10.0.0.1:80/timing?offset=0.5&pulse=0.9&pause=0.5&count=4&stay=16.0\"}"; 
+  char json_response[] = "{\"test\":\"http://192.168.4.1/test\",\"output\":\"http://192.168.4.1/output?number=1,2,3\",\"timing\":\"http://192.168.4.1/timing?offset=500&pulse=900&pause=500&count=4&stay=16000\"}";
   server.send(200, "application/json", json_response);
 }
 
@@ -339,7 +339,7 @@ void handlePlayback() {
   Serial.println("Request arguments: ");
   for(int i=0;i<server.args();i++) {
     Serial.println(" - " + server.argName(i) + " = " + server.arg(i));
-    if(server.argName(i) == "output") {
+    if(server.argName(i) == "number") {
       String value = server.arg(i);
       text2outputs(value);   
       handlePlayback_flag = true;
@@ -394,7 +394,7 @@ void setup_access_point() {
   
   server.on("/", handleRoot);
   server.on("/test", handleTest);
-  server.on("/playback", handlePlayback);
+  server.on("/output", handlePlayback);
   server.on("/timing", handleTiming);
   server.begin();
   
@@ -417,27 +417,6 @@ void setup() {
 
   // Setup MCP23017 gpio expanders
   setup_gpio_expanders();
-
-  
-  //write_mcps(0x0000);
-  //write_sequence();
-  //while(1);
-  
-  /*
-  for(int i=1; i<=120; i++) {
-    int result[2];
-    translate_output(i, result);
-    MCP23017 mcp = mcp_array[result[0]];
-    unsigned int value = 0x0001 << result[1];
-    byte A = value;
-    byte B = value >> 8;
-    mcp.writeRegister(MCP23017_REGISTER::GPIOA, A);
-    mcp.writeRegister(MCP23017_REGISTER::GPIOB, B);
-    delay(300);
-    write_mcps(0x0000);
-  }
-   while(1);
-   */
 
   // Setup Wifi Access Point
   setup_access_point();
