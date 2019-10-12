@@ -8,7 +8,7 @@
 
 const char *DIVIDER = "<=====================================>";
 const char *ssid = "Sternenhimmel";
-const char *password = "Sternenhimmel";
+const char *password = "Sternenhimmel3";
 
 ESP8266WebServer server(80);
 
