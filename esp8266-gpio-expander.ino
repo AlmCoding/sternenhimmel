@@ -29,7 +29,7 @@ int outputs[32] = {-1};
 
 bool handleRoot_flag = false;
 bool handleTest_flag = false;
-bool handlePlayback_flag = false;
+bool handleOutput_flag = false;
 
 struct TIMING {
   int OFFSET;
@@ -40,11 +40,13 @@ struct TIMING {
 };
 TIMING timings;
 
+
 /*
-  test='10.0.0.1:80/test',
-  output='10.0.0.1:80/output?number=3,4,',
-  timing='10.0.0.1:80/timing?offset=500&pulse=900&pause=500&count=4&stay=16000'
+  test='http://192.168.4.1/test',
+  output='http://192.168.4.1/output?number=3,4,',
+  timing='http://192.168.4.1/timing?offset=500&pulse=900&pause=500&count=4&stay=16000'
 */
+
 
 void text2outputs(String output_string) {
   Serial.println(output_string);
@@ -104,6 +106,7 @@ int translate_output(int number, int result[])  {
 
 enum PlaybackStages {
   _idle,
+  _offset,
   _pulse,
   _pause,
   _stay,
@@ -129,7 +132,22 @@ bool playback_sequence(bool run_function=true) {
     Serial.println(DIVIDER);
     Serial.println("Play Show [...]");
     pulse_counter = 0;
-    play_show_stage = _pulse;
+    play_show_stage = _offset;
+  }
+
+  // Offset
+  if(play_show_stage == _offset) {
+    if(do_once == true) {
+      Serial.println("Offset.");
+      write_mcps(0x0000);
+      start_time = millis();
+      do_once = false;
+    } else {
+      if((millis() - start_time) > timings.OFFSET) {
+        play_show_stage = _pulse;
+        do_once = true;
+      }
+    }
   }
 
   // Pulse
@@ -332,24 +350,25 @@ void handleTiming() {
 }
 
 
-void handlePlayback() {
+void handleOutput() {
   Serial.println(DIVIDER);
-  Serial.println("Get Playback sequence [...]");
+  Serial.println("Playback [...]");
   
   Serial.println("Request arguments: ");
   for(int i=0;i<server.args();i++) {
     Serial.println(" - " + server.argName(i) + " = " + server.arg(i));
     if(server.argName(i) == "number") {
       String value = server.arg(i);
-      text2outputs(value);   
-      handlePlayback_flag = true;
+      text2outputs(value);
+      handleOutput_flag = true;
       // Reset playback_sequence function state
       playback_sequence(false);
     }
   }
-  Serial.println("Get Playback sequence [OK]");
+  Serial.println("Playback [OK]");
   server.send(200, "Ok.");
 }
+
 
 void setup_gpio_expanders() {
   Serial.println(DIVIDER);
@@ -394,7 +413,7 @@ void setup_access_point() {
   
   server.on("/", handleRoot);
   server.on("/test", handleTest);
-  server.on("/output", handlePlayback);
+  server.on("/output", handleOutput);
   server.on("/timing", handleTiming);
   server.begin();
   
@@ -430,7 +449,7 @@ void loop() {
     handleTest_flag = test_outputs();
   }
 
-  if(handlePlayback_flag == true) {
-    handlePlayback_flag = playback_sequence();
+  if(handleOutput_flag == true) {
+    handleOutput_flag = playback_sequence();
   }
 }
