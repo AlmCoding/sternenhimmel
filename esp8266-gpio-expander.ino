@@ -74,7 +74,14 @@ int translate_output(int number, int result[])  {
    * result[0] is range of [0..7]
    * result[1] is range of [0..15]
    */
-  
+
+  // Connector shift
+  if(number <= 108) {
+    number += 6;
+  } else if (number <= 114) {
+    number -= 108;
+  }
+   
   // Reverse number
   number = 121 - number;
   //Serial.println(String(number));
