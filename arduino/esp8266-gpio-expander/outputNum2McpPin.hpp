@@ -5,12 +5,12 @@
 
 namespace gpio_expander {
 
-struct ExpanderPin_t {
-  uint32_t chip_number;
-  uint32_t pin_number;
+struct McpPin_t {
+  uint8_t chip_number;
+  uint8_t pin_number;
 };
 
-ExpanderPin_t outputNum2McpPin(int32_t output_number);
+McpPin_t outputNum2McpPin(uint8_t output_number);
 
 } // namespace gpio_expander
 

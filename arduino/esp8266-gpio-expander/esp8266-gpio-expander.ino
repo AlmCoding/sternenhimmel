@@ -9,6 +9,12 @@
 
 #define MCP_COUNT 8
 
+void set_outputs(uint16_t value, bool write = true);
+void generate_outputs(gpio_expander::SequenceStep_t *step);
+bool play_step(gpio_expander::SequenceStep_t *step, bool reset_fsm = false);
+bool play_sequence(bool reset_fsm = false);
+bool test_outputs(bool reset_fsm = false);
+
 static const char *DIVIDER = "<=====================================>";
 static const char *ssid = "Sternenhimmel";
 static const char *password = "Sternenhimmel3";
@@ -29,16 +35,45 @@ static MCP23017 mcp_array[MCP_COUNT] = {
   MCP23017(0x27)
 };
 
-static uint32_t mcp_output_array[8] = { 0 };
-static bool mcp_output_update[8] = { true };
+struct McpOutput {
+  uint16_t value = 0;
+  bool changed = true;
+};
 
-static bool handleTest_flag = false;
-static bool handleSequence_flag = false;
+static McpOutput mcpOutputArray[MCP_COUNT];
+
+static bool runTestFlag = false;
+static bool runSequenceFlag = false;
 
 /*
   test='http://192.168.4.1/test',
-  sequence='http://192.168.4.1/seq?s=[[[1,2,3],0,1000,3],[[3,4],100,1000,2]]',
+  sequence='http://192.168.4.1/seq?s=[[[1,2,3],0,1000,3],[[3,4],500,1000,2]]',
 */
+
+void set_outputs(uint16_t value, bool write) {
+  for (uint8_t idx = 0; idx < MCP_COUNT; idx++) {
+    if (mcpOutputArray[idx].value != value) {
+      mcpOutputArray[idx].value = value;
+      mcpOutputArray[idx].changed = true;
+    }
+  }
+
+  if (write == true) {
+    write_mcps();
+  }
+}
+
+void generate_outputs(uint8_t outputs[]) {
+  uint8_t idx = 0;
+  while (outputs[idx] != 0xff) {
+    gpio_expander::McpPin_t mpin = gpio_expander::outputNum2McpPin(outputs[idx]);
+
+    mcpOutputArray[mpin.chip_number].value |= 0x0001 << mpin.pin_number;
+    mcpOutputArray[mpin.chip_number].changed = true;
+
+    idx++;
+  }
+}
 
 enum class PlayStepState {
   pause_entry,
@@ -47,7 +82,7 @@ enum class PlayStepState {
   pulse,
 };
 
-bool play_step(gpio_expander::SequenceStep_t *step, bool reset_fsm = false) {
+bool play_step(gpio_expander::SequenceStep_t *step, bool reset_fsm) {
   static PlayStepState fsm_state = PlayStepState::pause_entry;
   static unsigned long start_time;
   static uint8_t rep_counter = 0;
@@ -61,23 +96,28 @@ bool play_step(gpio_expander::SequenceStep_t *step, bool reset_fsm = false) {
   }
 
   if (fsm_state == PlayStepState::pause_entry) {
+    // Start pause time
     start_time = millis();
 
-    // Clear all outputs
-    // ...
+    // Clear all outputs (no write)
+    set_outputs(0x0000, false);
     fsm_state = PlayStepState::pause;
   }
 
   if (fsm_state == PlayStepState::pause) {
-    // Check pause end
+    // Check pause time
     if ((millis() - start_time) >= step->offset) {
       fsm_state = PlayStepState::pulse_entry;
     }
   }
 
   if (fsm_state == PlayStepState::pulse_entry) {
-    // Write outputs
-    // ...
+    // Start pulse time
+    start_time = millis();
+
+    // Generate outputs
+    generate_outputs(step->outputs);
+
     fsm_state = PlayStepState::pulse;
   }
 
@@ -88,8 +128,8 @@ bool play_step(gpio_expander::SequenceStep_t *step, bool reset_fsm = false) {
     }
   }
 
-  // Update mcps
-  update_mcps()
+  // Write mcps
+  write_mcps();
 
   return in_progress;
 }
@@ -99,7 +139,7 @@ enum class PlaySeqState {
   running,
 };
 
-bool play_sequence(bool reset_fsm = false) {
+bool play_sequence(bool reset_fsm) {
   static PlaySeqState fsm_state = PlaySeqState::idle;
   static gpio_expander::SequenceStep_t seq_step;
   bool in_progress = true;
@@ -140,13 +180,13 @@ bool play_sequence(bool reset_fsm = false) {
 }
 
 enum class TestStage {
-  one,
-  two,
-  three,
+  init,
+  toggle,
+  delay,
 };
 
-bool test_outputs(bool reset_fsm = false) {
-  static TestStage test_stage = TestStage::one;
+bool test_outputs(bool reset_fsm) {
+  static TestStage test_stage = TestStage::init;
   static uint32_t output = 0xffff;
   static unsigned long start_time;
   static uint32_t toggle_counter = 0;
@@ -155,73 +195,45 @@ bool test_outputs(bool reset_fsm = false) {
   // Reset function state
   if (reset_fsm == true) {
     Serial.println("Reset test_outputs() function state.");
-    test_stage = TestStage::one;
+    test_stage = TestStage::init;
     output = 0xffff;
     toggle_counter = 0;
     return false;
   }
 
   // Start
-  if (test_stage == TestStage::one) {
+  if (test_stage == TestStage::init) {
     Serial.println(DIVIDER);
     Serial.println("Test Outputs [...]");
-    test_stage = TestStage::two;
+    test_stage = TestStage::toggle;
   }
 
   // Write gpios
-  if (test_stage == TestStage::two) {
+  if (test_stage == TestStage::toggle) {
     output = ~output;
-    write_mcps(output);
+    set_outputs(output);
     start_time = millis();
-    test_stage = TestStage::three;
+    test_stage = TestStage::delay;
     toggle_counter++;
   }
 
   // Delay of 300 ms
-  if (test_stage == TestStage::three) {
+  if (test_stage == TestStage::delay) {
     if ((millis() - start_time) > 300) {
-      test_stage = TestStage::two;
+      test_stage = TestStage::toggle;
     }
   }
 
   // End condition
   if (toggle_counter > 32) {
     Serial.println("Test Outputs [OK]");
-    test_stage = TestStage::one;
+    test_stage = TestStage::init;
     toggle_counter = 0;
-    write_mcps(0x0000);
+    set_outputs(0x0000);
     return false;
   }
 
   return in_progress;
-}
-
-void write_mcps(uint32_t value) {
-  // uint8_t A = value;
-  // uint8_t B = value >> 8;
-
-  for (int idx = 0; idx < MCP_COUNT; idx++) {
-    MCP23017 *mcp = &mcp_array[idx];
-    // mcp->init();
-    // mcp->writePort(MCP23017Port::A, A);
-    // mcp->writePort(MCP23017Port::B, B);
-    mcp->write(value);
-    mcp_output_array[idx] = value;
-  }
-}
-
-void update_mcps() {
-  for (int idx = 0; idx < MCP_COUNT; idx++) {
-    if (mcp_output_update[idx] == true) {
-      MCP23017 *mcp = &mcp_array[idx];
-      // uint8_t A = mcp_output_array[idx];
-      // uint8_t B = mcp_output_array[idx] >> 8;
-      // mcp->writePort(MCP23017Port::A, A);
-      // mcp->writePort(MCP23017Port::B, B);
-      mcp->write(mcp_output_array[idx]);
-      mcp_output_update[idx] = false;
-    }
-  }
 }
 
 void handleRoot() {
@@ -235,7 +247,7 @@ void handleTest() {
   // Reset test_outputs function state
   test_outputs(true);
 
-  handleTest_flag = true;
+  runTestFlag = true;
 }
 
 void handleSequence() {
@@ -248,65 +260,24 @@ void handleSequence() {
   // Reset play_sequence function state
   play_sequence(true);
 
-  handleSequence_flag = true;
+  runSequenceFlag = true;
 }
 
-/*
-void handleTiming() {
-  // timing_example='10.0.0.1:80/timing?offset=0.5&pulse=0.9&pause=0.5&count=4&stay=16.0'
-  Serial.println(DIVIDER);
-  Serial.println("Set Timings [...]");
-
-  Serial.println("Request arguments: ");
-  for (int i = 0; i < server.args(); i++) {
-    Serial.println(" - " + server.argName(i) + " = " + server.arg(i));
-    if (server.argName(i) == "offset") {
-      timings.OFFSET = server.arg(i).toInt();
-    } else if (server.argName(i) == "pulse") {
-      timings.PULSE = server.arg(i).toInt();
-    } else if (server.argName(i) == "pause") {
-      timings.PAUSE = server.arg(i).toInt();
-    } else if (server.argName(i) == "count") {
-      timings.COUNT = server.arg(i).toInt();
-    } else if (server.argName(i) == "stay") {
-      timings.STAY = server.arg(i).toInt();
+void write_mcps() {
+  for (uint8_t idx = 0; idx < MCP_COUNT; idx++) {
+    if (mcpOutputArray[idx].changed == true) {
+      MCP23017 *mcp = &mcp_array[idx];
+      mcp->write(mcpOutputArray[idx].value);
+      mcpOutputArray[idx].changed = false;
+      // uint8_t A = mcp_output_array[idx];
+      // uint8_t B = mcp_output_array[idx] >> 8;
+      // mcp->writePort(MCP23017Port::A, A);
+      // mcp->writePort(MCP23017Port::B, B);
     }
   }
-
-  String response = "offset: " + String(timings.OFFSET) + ", ";
-  response += "pulse: " + String(timings.PULSE) + ", ";
-  response += "pause: " + String(timings.PAUSE) + ", ";
-  response += "count: " + String(timings.COUNT) + ", ";
-  response += "stay: " + String(timings.STAY);
-
-  Serial.println(response);
-  Serial.println("Set Timings [OK]");
-  server.send(200, "text/html", response);
 }
-*/
 
-/*
-void handleOutput() {
-  Serial.println(DIVIDER);
-  Serial.println("Playback [...]");
-
-  Serial.println("Request arguments: ");
-  for (int i = 0; i < server.args(); i++) {
-    Serial.println(" - " + server.argName(i) + " = " + server.arg(i));
-    if (server.argName(i) == "number") {
-      String value = server.arg(i);
-      text2outputs(value);
-      handleOutput_flag = true;
-      // Reset playback_sequence function state
-      playback_sequence(false);
-    }
-  }
-  Serial.println("Playback [OK]");
-  server.send(200, "Ok.");
-}
-*/
-
-void setup_gpio_expanders() {
+void setup_mcps() {
   Serial.println(DIVIDER);
   Serial.println("Setup GPIO Expanders [...]");
 
@@ -328,7 +299,7 @@ void setup_gpio_expanders() {
 
   // Clear GPIOs
   Serial.println("Clear GPIOs.");
-  write_mcps(0x0000);
+  set_outputs(0x0000);
 
   Serial.println("Setup GPIO Expanders [OK]");
 }
@@ -360,8 +331,8 @@ void setup() {
   Serial.begin(9600);
   Wire.begin();
 
-  // Setup MCP23017 gpio expanders
-  setup_gpio_expanders();
+  // Setup MCP23017 group
+  setup_mcps();
 
   // Setup Wifi Access Point
   setup_access_point();
@@ -370,11 +341,11 @@ void setup() {
 void loop() {
   server.handleClient();
 
-  if (handleTest_flag == true) {
-    handleTest_flag = test_outputs();
+  if (runTestFlag == true) {
+    runTestFlag = test_outputs();
   }
 
-  if (handleSequence_flag == true) {
-    handleSequence_flag = play_sequence();
+  if (runSequenceFlag == true) {
+    runSequenceFlag = play_sequence();
   }
 }

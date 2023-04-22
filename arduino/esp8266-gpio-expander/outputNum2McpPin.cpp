@@ -2,32 +2,34 @@
 
 namespace gpio_expander {
 
-ExpanderPin_t outputNum2McpPin(int32_t output_number) {
+McpPin_t outputNum2McpPin(uint8_t output_number) {
   /**
    * output_number [1..120]
    */
 
+  int32_t outnum = output_number;
+
   // Connector shift
-  if (output_number <= 108) {
-    output_number += 6;
-  } else if (output_number <= 114) {
-    output_number -= 108;
+  if (outnum <= 108) {
+    outnum += 6;
+  } else if (outnum <= 114) {
+    outnum -= 108;
   }
 
   // Reverse number
-  output_number = 121 - output_number;
+  outnum = 121 - outnum;
 
   uint32_t mcp_offset = 0;
-  if (output_number > 60) {
-    output_number -= 60;
+  if (outnum > 60) {
+    outnum -= 60;
     mcp_offset = 4;
   }
 
-  int32_t rj45_connector_number = output_number / 6;
-  if ((output_number % 6) > 0) {
-    output_number++;
+  int32_t rj45_connector_number = outnum / 6;
+  if ((outnum % 6) > 0) {
+    outnum++;
   }
-  int32_t rj45_connector_pin = output_number - (rj45_connector_number - 1) * 6;
+  int32_t rj45_connector_pin = outnum - (rj45_connector_number - 1) * 6;
 
   int32_t range[] = { 6, 5, 4, 3, 2, 1 };
   int32_t pseudo_rj_45_connector_pin = range[rj45_connector_pin - 1];
@@ -39,11 +41,11 @@ ExpanderPin_t outputNum2McpPin(int32_t output_number) {
   }
   int32_t pin_number = pseudo_pin_number - (mcp_number - 1) * 16;
 
-  ExpanderPin_t expander_pin;
-  expander_pin.chip_number = mcp_offset + mcp_number - 1;
-  expander_pin.pin_number = pin_number - 1;
+  McpPin_t mcp_pin;
+  mcp_pin.chip_number = mcp_offset + mcp_number - 1;
+  mcp_pin.pin_number = pin_number - 1;
 
-  return expander_pin;
+  return mcp_pin;
 }
 
-} // namespace gpio_expander
+}  // namespace gpio_expander
