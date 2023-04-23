@@ -7,11 +7,16 @@
 #include "SequenceParser.hpp"
 #include "outputNum2McpPin.hpp"
 
-#define DEBUG true  // Set true for debug output
+// Set true for debug output
+#define DEBUG false
+// Set true when testing without hardware
+#define SIMULATE_HW true
+
 #define DEBUG_SERIAL \
   if (DEBUG) Serial
-
-#define SIMULATE_MCPS  // When no hardware available
+#if ((DEBUG == true) || (SIMULATE_HW == true))
+char buffer[64];  // sprintf buffer
+#endif
 
 #define MCP_COUNT 8
 
@@ -30,6 +35,7 @@ static ESP8266WebServer server{ 80 };
 static String seqString;
 static gpio_expander::SequenceParser seqParser{};
 
+#if (SIMULATE_HW == false)
 static MCP23017 mcp_array[MCP_COUNT] = {
   MCP23017(0x20),
   MCP23017(0x21),
@@ -40,6 +46,7 @@ static MCP23017 mcp_array[MCP_COUNT] = {
   MCP23017(0x26),
   MCP23017(0x27)
 };
+#endif
 
 struct McpOutput {
   uint16_t value = 0;
@@ -52,7 +59,7 @@ static bool runTestFlag = false;
 static bool runSequenceFlag = false;
 
 /*
-  test='http://192.168.4.1/test',
+  test='http://192.168.4.1/tst',
   sequence='http://192.168.4.1/seq?s=[[[1,2,3],0,1000,3],[[3,4],500,1000,2]]',
 */
 
@@ -71,6 +78,7 @@ void set_outputs(uint16_t value, bool write) {
 
 void generate_outputs(uint8_t outputs[]) {
   uint8_t idx = 0;
+  DEBUG_SERIAL.println("Parse outputs of step:");
 
   while (outputs[idx] != 0xff) {
     uint8_t output = outputs[idx];
@@ -82,9 +90,8 @@ void generate_outputs(uint8_t outputs[]) {
       mcpOutputArray[mpin.chip_number].changed = true;
     }
 
-#ifdef DEBUG
-    char buffer[48];
-    sprintf(buffer, "Out: %d, mcp: %d, pin: %d", output, mpin.chip_number, mpin.pin_number);
+#if (DEBUG == true)
+    sprintf(buffer, "  Out: %d = (mcp: %d, pin: %d)", output, mpin.chip_number, mpin.pin_number);
     DEBUG_SERIAL.println(buffer);
 #endif
 
@@ -117,6 +124,11 @@ bool play_step(gpio_expander::SequenceStep_t *step, bool reset_fsm) {
     // Start pause time
     start_time = millis();
 
+#if (DEBUG == true)
+    sprintf(buffer, "Start pause: %d ms", step->offset);
+    DEBUG_SERIAL.println(buffer);
+#endif
+
     // Clear all outputs (no write)
     set_outputs(0x0000, false);
     fsm_state = PlayStepState::pause;
@@ -132,6 +144,11 @@ bool play_step(gpio_expander::SequenceStep_t *step, bool reset_fsm) {
   if (fsm_state == PlayStepState::pulse_entry) {
     // Start pulse time
     start_time = millis();
+
+#if (DEBUG == true)
+    sprintf(buffer, "Start pulse: %d ms", step->duration);
+    DEBUG_SERIAL.println(buffer);
+#endif
 
     // Generate outputs
     generate_outputs(step->outputs);
@@ -270,7 +287,7 @@ bool test_outputs(bool reset_fsm) {
 }
 
 void handleRoot() {
-  char json_response[] = "{\"test\":\"http://192.168.4.1/tst\",\"sequence\":\"http://192.168.4.1/seq?s=[[[1,2],0,1000,3],[[2,3],0,1000,3]]\"}";
+  char json_response[] = "{\"test\":\"http://192.168.4.1/tst\",\"sequence\":\"http://192.168.4.1/seq?s=[[[1,2],0,1000,1],[[2,3],0,1000,2]]\"}";
   server.send(200, "application/json", json_response);
 }
 
@@ -303,13 +320,12 @@ void write_mcps() {
     if (mcpOutputArray[idx].changed == true) {
       uint16_t value = mcpOutputArray[idx].value;
 
-#ifdef SIMULATE_MCPS
-      char buffer[32];
-      sprintf(buffer, "Mcp: %d, val: 0x%04X", idx, value);
-      DEBUG_SERIAL.println(buffer);
-#else
+#if (SIMULATE_HW == false)
       MCP23017 *mcp = &mcp_array[idx];
       mcp->write(value);
+#else
+      sprintf(buffer, "Mcp: %d, val: 0x%04X", idx, value);
+      DEBUG_SERIAL.println(buffer);
 #endif
 
       mcpOutputArray[idx].changed = false;
@@ -325,7 +341,7 @@ void setup_mcps() {
   DEBUG_SERIAL.println(DIVIDER);
   DEBUG_SERIAL.println("Setup GPIO Expanders [...]");
 
-#ifndef SIMULATE_MCPS
+#if (SIMULATE_HW == false)
   // Clear MCP23017 I2C address MSB pin
   DEBUG_SERIAL.println("Clear MCP23017 I2C address MSB pin.");
   int address_pin = 16;
