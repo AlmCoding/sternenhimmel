@@ -10,7 +10,7 @@
 // Set true for debug output
 #define DEBUG false
 // Set true when testing without hardware
-#define SIMULATE_HW true
+#define SIMULATE_HW false
 
 #define DEBUG_SERIAL \
   if (DEBUG) Serial
