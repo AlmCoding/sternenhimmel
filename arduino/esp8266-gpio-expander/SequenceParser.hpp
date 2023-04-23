@@ -10,8 +10,8 @@ namespace gpio_expander {
 
 struct SequenceStep_t {
   uint8_t outputs[OUTPUTS_BUFFER_SIZE];
-  uint32_t offset;
-  uint32_t duration;
+  uint32_t pause;
+  uint32_t pulse;
   uint8_t reps;
 };
 

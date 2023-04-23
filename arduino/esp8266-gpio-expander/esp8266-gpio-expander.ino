@@ -125,7 +125,7 @@ bool play_step(gpio_expander::SequenceStep_t *step, bool reset_fsm) {
     start_time = millis();
 
 #if (DEBUG == true)
-    sprintf(buffer, "Start pause: %d ms", step->offset);
+    sprintf(buffer, "Start pause: %d ms", step->pause);
     DEBUG_SERIAL.println(buffer);
 #endif
 
@@ -136,7 +136,7 @@ bool play_step(gpio_expander::SequenceStep_t *step, bool reset_fsm) {
 
   if (fsm_state == PlayStepState::pause) {
     // Check pause time
-    if ((millis() - start_time) >= step->offset) {
+    if ((millis() - start_time) >= step->pause) {
       fsm_state = PlayStepState::pulse_entry;
     }
   }
@@ -146,7 +146,7 @@ bool play_step(gpio_expander::SequenceStep_t *step, bool reset_fsm) {
     start_time = millis();
 
 #if (DEBUG == true)
-    sprintf(buffer, "Start pulse: %d ms", step->duration);
+    sprintf(buffer, "Start pulse: %d ms", step->pulse);
     DEBUG_SERIAL.println(buffer);
 #endif
 
@@ -158,7 +158,7 @@ bool play_step(gpio_expander::SequenceStep_t *step, bool reset_fsm) {
 
   if (fsm_state == PlayStepState::pulse) {
     // Check pulse end
-    if ((millis() - start_time) >= step->duration) {
+    if ((millis() - start_time) >= step->pulse) {
       reps_counter++;
 
       if (reps_counter == step->reps) {

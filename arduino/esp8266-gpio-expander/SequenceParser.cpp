@@ -78,9 +78,9 @@ int32_t parseStep(const char* str, SequenceStep_t* step) {
   }
 
   // Parse the offset, duration and reps
-  step->offset = strtol(p, &endptr, 10);
+  step->pause = strtol(p, &endptr, 10);
   endptr++;  // skip ','
-  step->duration = strtol(endptr, &endptr, 10);
+  step->pulse = strtol(endptr, &endptr, 10);
   endptr++;  // skip ','
   step->reps = strtol(endptr, &endptr, 10);
   endptr++;  // skip ']'
