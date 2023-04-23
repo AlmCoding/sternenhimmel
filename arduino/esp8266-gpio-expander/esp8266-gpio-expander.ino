@@ -7,6 +7,12 @@
 #include "SequenceParser.hpp"
 #include "outputNum2McpPin.hpp"
 
+#define DEBUG true  // Set true for debug output
+#define DEBUG_SERIAL \
+  if (DEBUG) Serial
+
+#define SIMULATE_MCPS  // When no hardware available
+
 #define MCP_COUNT 8
 
 void set_outputs(uint16_t value, bool write = true);
@@ -67,10 +73,8 @@ void generate_outputs(uint8_t outputs[]) {
   uint8_t idx = 0;
   while (outputs[idx] != 0xff) {
     gpio_expander::McpPin_t mpin = gpio_expander::outputNum2McpPin(outputs[idx]);
-
     mcpOutputArray[mpin.chip_number].value |= 0x0001 << mpin.pin_number;
     mcpOutputArray[mpin.chip_number].changed = true;
-
     idx++;
   }
 }
@@ -85,13 +89,14 @@ enum class PlayStepState {
 bool play_step(gpio_expander::SequenceStep_t *step, bool reset_fsm) {
   static PlayStepState fsm_state = PlayStepState::pause_entry;
   static unsigned long start_time;
-  static uint8_t rep_counter = 0;
+  static uint8_t reps_counter = 0;
   bool in_progress = true;
 
   if (reset_fsm == true) {
     // Reset step fsm
-    Serial.println("Reset step fsm.");
+    DEBUG_SERIAL.println("Reset step fsm.");
     fsm_state = PlayStepState::pause_entry;
+    reps_counter = 0;
     return false;
   }
 
@@ -124,7 +129,18 @@ bool play_step(gpio_expander::SequenceStep_t *step, bool reset_fsm) {
   if (fsm_state == PlayStepState::pulse) {
     // Check pulse end
     if ((millis() - start_time) >= step->duration) {
-      return false;
+      reps_counter++;
+
+      if (reps_counter == step->reps) {
+        // Step finised
+        DEBUG_SERIAL.println("Step finished.");
+        // Reset step
+        play_step(nullptr, true);
+        return false;
+      }
+
+      // Repeat step
+      fsm_state = PlayStepState::pause_entry;
     }
   }
 
@@ -146,10 +162,10 @@ bool play_sequence(bool reset_fsm) {
 
   if (reset_fsm == true) {
     // Reset sequence fsm
-    Serial.println("Reset sequence fsm.");
-    // Reset step fsm
-    play_step(nullptr, true);
+    DEBUG_SERIAL.println("Reset sequence fsm.");
     fsm_state = PlaySeqState::idle;
+    // Clear all outputs
+    set_outputs(0x0000);
     return false;
   }
 
@@ -160,11 +176,14 @@ bool play_sequence(bool reset_fsm) {
 
     if (status != gpio_expander::ParserStatus::OK) {
       // Sequence finised
-      Serial.println("Sequence finished.");
-      fsm_state = PlaySeqState::idle;
-      // clear all outputs
+      DEBUG_SERIAL.println("Sequence finished.");
+      // Reset sequence fsm
+      play_sequence(true);
       return false;
     }
+
+    // Reset step fsm for new step
+    play_step(nullptr, true);
   }
 
   // Play sequence step
@@ -194,7 +213,7 @@ bool test_outputs(bool reset_fsm) {
 
   // Reset function state
   if (reset_fsm == true) {
-    Serial.println("Reset test_outputs() function state.");
+    DEBUG_SERIAL.println("Reset test_outputs() function state.");
     test_stage = TestStage::init;
     output = 0xffff;
     toggle_counter = 0;
@@ -203,8 +222,8 @@ bool test_outputs(bool reset_fsm) {
 
   // Start
   if (test_stage == TestStage::init) {
-    Serial.println(DIVIDER);
-    Serial.println("Test Outputs [...]");
+    DEBUG_SERIAL.println(DIVIDER);
+    DEBUG_SERIAL.println("Test Outputs [...]");
     test_stage = TestStage::toggle;
   }
 
@@ -226,7 +245,7 @@ bool test_outputs(bool reset_fsm) {
 
   // End condition
   if (toggle_counter > 32) {
-    Serial.println("Test Outputs [OK]");
+    DEBUG_SERIAL.println("Test Outputs [OK]");
     test_stage = TestStage::init;
     toggle_counter = 0;
     set_outputs(0x0000);
@@ -237,7 +256,7 @@ bool test_outputs(bool reset_fsm) {
 }
 
 void handleRoot() {
-  char json_response[] = "{\"test\":\"http://192.168.4.1/test\",\"output\":\"http://192.168.4.1/output?number=1,2,3\"}";
+  char json_response[] = "{\"test\":\"http://192.168.4.1/tst\",\"sequence\":\"http://192.168.4.1/seq?s=[[[1,2],0,1000,3],[[2,3],0,1000,3]]\"}";
   server.send(200, "application/json", json_response);
 }
 
@@ -266,9 +285,18 @@ void handleSequence() {
 void write_mcps() {
   for (uint8_t idx = 0; idx < MCP_COUNT; idx++) {
     if (mcpOutputArray[idx].changed == true) {
+      uint16_t value = mcpOutputArray[idx].value;
+
+#ifdef SIMULATE_MCPS
+      char buffer[32];
+      sprintf(buffer, "Mcp: %d, val: 0x%04X", idx, value);
+      DEBUG_SERIAL.println(buffer);
+#else
       MCP23017 *mcp = &mcp_array[idx];
-      mcp->write(mcpOutputArray[idx].value);
+      mcp->write(value);
       mcpOutputArray[idx].changed = false;
+#endif
+
       // uint8_t A = mcp_output_array[idx];
       // uint8_t B = mcp_output_array[idx] >> 8;
       // mcp->writePort(MCP23017Port::A, A);
@@ -278,17 +306,18 @@ void write_mcps() {
 }
 
 void setup_mcps() {
-  Serial.println(DIVIDER);
-  Serial.println("Setup GPIO Expanders [...]");
+  DEBUG_SERIAL.println(DIVIDER);
+  DEBUG_SERIAL.println("Setup GPIO Expanders [...]");
 
+#ifndef SIMULATE_MCPS
   // Clear MCP23017 I2C address MSB pin
-  Serial.println("Clear MCP23017 I2C address MSB pin.");
+  DEBUG_SERIAL.println("Clear MCP23017 I2C address MSB pin.");
   int address_pin = 16;
   pinMode(address_pin, OUTPUT);
   digitalWrite(address_pin, LOW);
 
   // Init MCP23017s
-  Serial.println("Initialize MCP23017 ports as output.");
+  DEBUG_SERIAL.println("Initialize MCP23017 ports as output.");
   MCP23017 *mcp = mcp_array;
   for (int i = 0; i < MCP_COUNT; i++) {
     mcp->init();
@@ -296,39 +325,40 @@ void setup_mcps() {
     mcp->portMode(MCP23017Port::B, 0, 0, 0);  // Port B as output
     mcp++;
   }
+#endif
 
   // Clear GPIOs
-  Serial.println("Clear GPIOs.");
+  DEBUG_SERIAL.println("Clear GPIOs.");
   set_outputs(0x0000);
 
-  Serial.println("Setup GPIO Expanders [OK]");
+  DEBUG_SERIAL.println("Setup GPIO Expanders [OK]");
 }
 
 void setup_access_point() {
-  Serial.println(DIVIDER);
-  Serial.println("Setup Access Point [...]");
-  Serial.print("SSID: ");
-  Serial.println(ssid);
-  Serial.print("Password: ");
-  Serial.println(password);
+  DEBUG_SERIAL.println(DIVIDER);
+  DEBUG_SERIAL.println("Setup Access Point [...]");
+  DEBUG_SERIAL.print("SSID: ");
+  DEBUG_SERIAL.println(ssid);
+  DEBUG_SERIAL.print("Password: ");
+  DEBUG_SERIAL.println(password);
 
   WiFi.softAP(ssid, password);
   IPAddress ip = WiFi.softAPIP();
-  Serial.print("IP address: ");
-  Serial.println(ip);
+  DEBUG_SERIAL.print("IP address: ");
+  DEBUG_SERIAL.println(ip);
 
   server.on("/", handleRoot);
   server.on("/tst", handleTest);
   server.on("/seq", handleSequence);
   server.begin();
 
-  Serial.println("HTTP server started.");
-  Serial.println("Setup Access Point [OK]");
+  DEBUG_SERIAL.println("HTTP server started.");
+  DEBUG_SERIAL.println("Setup Access Point [OK]");
 }
 
 void setup() {
   // Setup Serial and I2C Interface
-  Serial.begin(9600);
+  DEBUG_SERIAL.begin(9600);
   Wire.begin();
 
   // Setup MCP23017 group
