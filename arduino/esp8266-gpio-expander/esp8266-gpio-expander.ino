@@ -373,6 +373,9 @@ void setup_access_point() {
 }
 
 void setup() {
+  // Set cpu clk to 160 MHz
+  os_update_cpu_frequency(160);
+
   // Setup Serial and I2C Interface
   DEBUG_SERIAL.begin(115200);
   Wire.begin();
