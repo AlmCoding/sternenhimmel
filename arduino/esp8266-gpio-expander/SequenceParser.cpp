@@ -89,4 +89,4 @@ int32_t parseStep(const char* str, SequenceStep_t* step) {
   return parsedChars;
 }
 
-} // namespace gpio_expander
+}  // namespace gpio_expander

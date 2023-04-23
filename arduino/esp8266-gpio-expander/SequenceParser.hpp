@@ -32,6 +32,6 @@ private:
   const char* m_sequence;
 };
 
-} // namespace gpio_expander
+}  // namespace gpio_expander
 
 #endif  // SEQUENCE_PARSER_H
