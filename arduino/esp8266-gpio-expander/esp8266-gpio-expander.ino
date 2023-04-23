@@ -71,10 +71,23 @@ void set_outputs(uint16_t value, bool write) {
 
 void generate_outputs(uint8_t outputs[]) {
   uint8_t idx = 0;
+
   while (outputs[idx] != 0xff) {
-    gpio_expander::McpPin_t mpin = gpio_expander::outputNum2McpPin(outputs[idx]);
-    mcpOutputArray[mpin.chip_number].value |= 0x0001 << mpin.pin_number;
-    mcpOutputArray[mpin.chip_number].changed = true;
+    uint8_t output = outputs[idx];
+    gpio_expander::McpPin_t mpin = gpio_expander::outputNum2McpPin(output);
+
+    if ((mpin.chip_number < MCP_COUNT) && (mpin.pin_number < 16)) {
+      uint16_t pin = 0x0001 << mpin.pin_number;
+      mcpOutputArray[mpin.chip_number].value |= pin;
+      mcpOutputArray[mpin.chip_number].changed = true;
+    }
+
+#ifdef DEBUG
+    char buffer[48];
+    sprintf(buffer, "Out: %d, mcp: %d, pin: %d", output, mpin.chip_number, mpin.pin_number);
+    DEBUG_SERIAL.println(buffer);
+#endif
+
     idx++;
   }
 }
@@ -171,6 +184,7 @@ bool play_sequence(bool reset_fsm) {
 
   if (fsm_state == PlaySeqState::idle) {
     // Parse next sequence step
+    DEBUG_SERIAL.println("Parse sequence step.");
     gpio_expander::ParserStatus status;
     status = seqParser.parseNextStep(&seq_step);
 
@@ -245,10 +259,10 @@ bool test_outputs(bool reset_fsm) {
 
   // End condition
   if (toggle_counter > 32) {
-    DEBUG_SERIAL.println("Test Outputs [OK]");
+    set_outputs(0x0000);
     test_stage = TestStage::init;
     toggle_counter = 0;
-    set_outputs(0x0000);
+    DEBUG_SERIAL.println("Test Outputs [OK]");
     return false;
   }
 
@@ -271,7 +285,9 @@ void handleTest() {
 
 void handleSequence() {
   server.send(200, "text/html", "<h1>Sequence is running ...</h1>");
-  seqString = server.argName(0);
+  seqString = server.arg(0);
+  DEBUG_SERIAL.println("Run sequence:");
+  DEBUG_SERIAL.println(seqString.c_str());
 
   // Init sequence parser
   seqParser.init(seqString.c_str());
@@ -294,9 +310,9 @@ void write_mcps() {
 #else
       MCP23017 *mcp = &mcp_array[idx];
       mcp->write(value);
-      mcpOutputArray[idx].changed = false;
 #endif
 
+      mcpOutputArray[idx].changed = false;
       // uint8_t A = mcp_output_array[idx];
       // uint8_t B = mcp_output_array[idx] >> 8;
       // mcp->writePort(MCP23017Port::A, A);
@@ -358,7 +374,7 @@ void setup_access_point() {
 
 void setup() {
   // Setup Serial and I2C Interface
-  DEBUG_SERIAL.begin(9600);
+  DEBUG_SERIAL.begin(115200);
   Wire.begin();
 
   // Setup MCP23017 group
