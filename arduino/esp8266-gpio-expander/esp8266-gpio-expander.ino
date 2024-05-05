@@ -8,9 +8,9 @@
 #include "outputNum2McpPin.hpp"
 
 // Set true for debug output
-#define DEBUG false
+#define DEBUG true
 // Set true when testing without hardware
-#define SIMULATE_HW false
+#define SIMULATE_HW true
 
 #define DEBUG_SERIAL \
   if (DEBUG) Serial
