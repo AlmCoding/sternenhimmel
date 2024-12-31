@@ -1,8 +1,7 @@
-#include <ESP8266WebServer.h>
-#include <ESP8266WiFi.h>
-#include <WiFiClient.h>
-#include <MCP23017.h>
 #include <Wire.h>
+#include <WiFi.h>
+#include <WebServer.h>
+#include <MCP23017.h>
 #include <math.h>
 #include "SequenceParser.hpp"
 #include "outputNum2McpPin.hpp"
@@ -30,7 +29,7 @@ static const char *DIVIDER = "<=====================================>";
 static const char *ssid = "Sternenhimmel";
 static const char *password = "Sternenhimmel3";
 
-static ESP8266WebServer server{ 80 };
+static WebServer server{ 80 };
 
 static String seqString;
 static gpio_expander::SequenceParser seqParser{};
@@ -390,7 +389,7 @@ void setup_access_point() {
 
 void setup() {
   // Set cpu clk to 160 MHz
-  os_update_cpu_frequency(160);
+  // os_update_cpu_frequency(160);
 
   // Setup Serial and I2C Interface
   DEBUG_SERIAL.begin(115200);
