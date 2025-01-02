@@ -3135,6 +3135,12 @@
 		(uuid "15fcc244-cea8-4950-b389-b62e2087d54d")
 	)
 	(junction
+		(at 161.29 21.59)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "160248a0-f185-4a12-bab6-000c5979bd52")
+	)
+	(junction
 		(at 204.47 39.37)
 		(diameter 0)
 		(color 0 0 0 0)
@@ -4124,7 +4130,7 @@
 	)
 	(wire
 		(pts
-			(xy 161.29 20.32) (xy 161.29 24.13)
+			(xy 161.29 20.32) (xy 161.29 21.59)
 		)
 		(stroke
 			(width 0)
@@ -4281,6 +4287,16 @@
 			(type default)
 		)
 		(uuid "1fc1cbf6-33c8-4ba2-bd09-6fc00cc89fe3")
+	)
+	(wire
+		(pts
+			(xy 156.21 21.59) (xy 161.29 21.59)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "21b63bc9-d6ad-4b9b-ad25-98640f325ca7")
 	)
 	(wire
 		(pts
@@ -4601,16 +4617,6 @@
 			(type default)
 		)
 		(uuid "332291d7-6d52-40c3-87b6-e1a03c58d287")
-	)
-	(wire
-		(pts
-			(xy 156.21 17.78) (xy 147.32 17.78)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "333704f4-9a32-4e64-98ec-f315ce984db1")
 	)
 	(wire
 		(pts
@@ -5074,16 +5080,6 @@
 	)
 	(wire
 		(pts
-			(xy 147.32 27.94) (xy 147.32 29.21)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "555745d0-3c42-4967-a41e-66bdfc1525d8")
-	)
-	(wire
-		(pts
 			(xy 68.58 29.21) (xy 68.58 36.83)
 		)
 		(stroke
@@ -5401,16 +5397,6 @@
 			(type default)
 		)
 		(uuid "70a33a0b-3143-4139-bc9b-4640132e89af")
-	)
-	(wire
-		(pts
-			(xy 147.32 17.78) (xy 147.32 20.32)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "73197f2b-5ca3-4bbc-b686-14793228a18f")
 	)
 	(wire
 		(pts
@@ -6594,6 +6580,16 @@
 	)
 	(wire
 		(pts
+			(xy 161.29 21.59) (xy 161.29 24.13)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "c1e2532c-058e-468a-b341-375972017386")
+	)
+	(wire
+		(pts
 			(xy 198.12 83.82) (xy 198.12 52.07)
 		)
 		(stroke
@@ -6624,7 +6620,7 @@
 	)
 	(wire
 		(pts
-			(xy 156.21 24.13) (xy 156.21 17.78)
+			(xy 156.21 24.13) (xy 156.21 21.59)
 		)
 		(stroke
 			(width 0)
@@ -9069,72 +9065,6 @@
 		)
 	)
 	(symbol
-		(lib_id "power:GND")
-		(at 147.32 29.21 0)
-		(unit 1)
-		(exclude_from_sim no)
-		(in_bom yes)
-		(on_board yes)
-		(dnp no)
-		(fields_autoplaced yes)
-		(uuid "5a4f3ee8-3aa4-4786-a4b4-d5e3cee89538")
-		(property "Reference" "#PWR011"
-			(at 147.32 35.56 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Value" "GND"
-			(at 147.32 34.29 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Footprint" ""
-			(at 147.32 29.21 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Datasheet" ""
-			(at 147.32 29.21 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Description" ""
-			(at 147.32 29.21 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(pin "1"
-			(uuid "1e63d4b4-d8ed-4dc6-915a-8f884473a8e6")
-		)
-		(instances
-			(project "test"
-				(path "/bfb88c66-3278-41a9-b822-09be2f151e4c"
-					(reference "#PWR011")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
 		(lib_id "power:+5V")
 		(at 36.83 104.14 0)
 		(unit 1)
@@ -10844,75 +10774,6 @@
 			(project "test"
 				(path "/bfb88c66-3278-41a9-b822-09be2f151e4c"
 					(reference "#PWR07")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
-		(lib_id "Device:C")
-		(at 147.32 24.13 0)
-		(unit 1)
-		(exclude_from_sim no)
-		(in_bom yes)
-		(on_board yes)
-		(dnp no)
-		(uuid "bdf429dc-b028-4368-8f67-acd1702efce6")
-		(property "Reference" "C6"
-			(at 148.59 21.59 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left)
-			)
-		)
-		(property "Value" "1uF"
-			(at 148.59 26.67 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left)
-			)
-		)
-		(property "Footprint" "Capacitor_SMD:C_0805_2012Metric"
-			(at 148.2852 27.94 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Datasheet" "~"
-			(at 147.32 24.13 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Description" ""
-			(at 147.32 24.13 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(pin "1"
-			(uuid "e345a005-e89b-4dd5-8282-6aab9cd2a7ed")
-		)
-		(pin "2"
-			(uuid "3c68db70-d8f6-4d70-a831-4b9ae531984e")
-		)
-		(instances
-			(project "test"
-				(path "/bfb88c66-3278-41a9-b822-09be2f151e4c"
-					(reference "C6")
 					(unit 1)
 				)
 			)
