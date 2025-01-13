@@ -20,93 +20,28 @@
 #include "DaisyChain.h"
 #include "common.h"
 
-/*
-// HSPI pins
-#define CLOCK_0_GPIO 14
-#define DATA_0_GPIO 13
-// VSPI pins
-#define CLOCK_1_GPIO 18
-#define DATA_1_GPIO 23
-
-uint8_t current_brightness[CHAIN_COUNT][CHAIN_SIZE][LED_COUNT];
-
-Adafruit_TLC59711 chain0_ = Adafruit_TLC59711(CHAIN_SIZE, CLOCK_0_GPIO, DATA_0_GPIO);
-Adafruit_TLC59711 chain1_ = Adafruit_TLC59711(CHAIN_SIZE, CLOCK_1_GPIO, DATA_1_GPIO);
-
-void update_chain(ChainIdx idx) {
-  Adafruit_TLC59711* chain = &chain0_;
-  if (idx == ChainIdx::CHAIN_1) {
-    chain = &chain1_;
-  }
-
-  for (uint8_t tlc_idx = 0; tlc_idx < CHAIN_SIZE; tlc_idx++) {
-    for (uint8_t led_idx = 0; led_idx < (LED_COUNT / 3); led_idx++) {  // LED index is [0, 1, 2, 3]
-      uint16_t led_number = tlc_idx * (LED_COUNT / 3) + led_idx;
-      chain->setLED(led_number,
-                    current_brightness[static_cast<int>(idx)][tlc_idx][led_idx * 3],      // R channel
-                    current_brightness[static_cast<int>(idx)][tlc_idx][led_idx * 3 + 1],  // G channel
-                    current_brightness[static_cast<int>(idx)][tlc_idx][led_idx * 3 + 2]   // B channel
-      );
-    }
-  }
-  chain->write();
-}
-*/
+#define DEBUG_ENABLE_MAIN 1
+#if ((DEBUG_ENABLE_MAIN == 1) && (ENABLE_DEBUG_OUTPUT == 1))
+#define DEBUG_INFO(f, ...) Serial.printf("[INF][Main]: " f "\n", ##__VA_ARGS__)
+#else
+#define DEBUG_INFO(...)
+#endif
 
 void setup() {
+#if (ENABLE_DEBUG_OUTPUT == 1)
   Serial.begin(115200);
-  Serial.println("Setup ESP32-daisy-chain [...]");
+#endif
+  DEBUG_INFO("%s", DIVIDER);
+  DEBUG_INFO("Setup ESP32-daisy-chain [...]");
 
   DaisyChain::getInstance().initialize();
 
-  // chain0_.begin();
-  // chain0_.write();
+  DEBUG_INFO("Setup ESP32-daisy-chain [OK]");
+  DEBUG_INFO("%s", DIVIDER);
 }
 
 void loop() {
   DaisyChain::getInstance().runTestShow();
-
-  // increaseBrightness();
-
-  /*
-  // PCB1
-  chain0_.setLED(0, 0xffff, 0xffff, 0xffff);
-  chain0_.setLED(1, 0xffff, 0xffff, 0xffff);
-  chain0_.setLED(2, 0xffff, 0xffff, 0xffff);
-  chain0_.setLED(3, 0xffff, 0xffff, 0xffff);
-
-  // PCB2
-  tlc.setLED(4, 0xffff, 0xffff, 0xffff);
-  tlc.setLED(5, 0xffff, 0xffff, 0xffff);
-  tlc.setLED(6, 0xffff, 0xffff, 0xffff);
-  tlc.setLED(7, 0xffff, 0xffff, 0xffff);
-  // PCB3
-  tlc.setLED(8, 0xffff, 0xffff, 0xffff);
-  tlc.setLED(9, 0xffff, 0xffff, 0xffff);
-  tlc.setLED(10, 0xffff, 0xffff, 0xffff);
-  tlc.setLED(11, 0xffff, 0xffff, 0xffff);
-
-  chain0_.simpleSetBrightness(0xff);
-  chain0_.write();
-  delay(200);
-
-  chain0_.setLED(0, 0, 0, 0);
-  chain0_.setLED(1, 0, 0, 0);
-  chain0_.setLED(2, 0, 0, 0);
-  chain0_.setLED(3, 0, 0, 0);
-
-  tlc.setLED(4, 0, 0, 0);
-  tlc.setLED(5, 0, 0, 0);
-  tlc.setLED(6, 0, 0, 0);
-  tlc.setLED(7, 0, 0, 0);
-  tlc.setLED(8, 0, 0, 0);
-  tlc.setLED(9, 0, 0, 0);
-  tlc.setLED(10, 0, 0, 0);
-  tlc.setLED(11, 0, 0, 0);
-
-  chain0_.write();
-  delay(800);
-  */
 }
 
 /*
