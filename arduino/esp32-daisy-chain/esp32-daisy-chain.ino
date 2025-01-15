@@ -18,6 +18,7 @@
 #include <SPI.h>
 #include "Adafruit_TLC59711.h"
 #include "DaisyChain.h"
+#include "Player.h"
 #include "common.h"
 
 #define DEBUG_ENABLE_MAIN 1
@@ -27,83 +28,62 @@
 #define DEBUG_INFO(...)
 #endif
 
+void test_play() {
+  static LedObj leds[LED_COUNT] = {
+    { ChainIdx::CHAIN_0, 0, 0, static_cast<BrgNumber>(BrgName::BRG_MAX) },
+    { ChainIdx::CHAIN_0, 0, 1, static_cast<BrgNumber>(BrgName::BRG_MAX) },
+    { ChainIdx::CHAIN_0, 0, 2, static_cast<BrgNumber>(BrgName::BRG_MAX) },
+    { ChainIdx::CHAIN_0, 0, 3, static_cast<BrgNumber>(BrgName::BRG_MAX) },
+    { ChainIdx::CHAIN_0, 0, 4, static_cast<BrgNumber>(BrgName::BRG_MAX) },
+    { ChainIdx::CHAIN_0, 0, 5, static_cast<BrgNumber>(BrgName::BRG_MAX) },
+    { ChainIdx::CHAIN_0, 1, 6, static_cast<BrgNumber>(BrgName::BRG_MAX) },
+    { ChainIdx::CHAIN_0, 1, 7, static_cast<BrgNumber>(BrgName::BRG_MAX) },
+    { ChainIdx::CHAIN_0, 1, 8, static_cast<BrgNumber>(BrgName::BRG_MAX) },
+    { ChainIdx::CHAIN_0, 1, 9, static_cast<BrgNumber>(BrgName::BRG_MAX) },
+    { ChainIdx::CHAIN_0, 1, 10, static_cast<BrgNumber>(BrgName::BRG_MAX) },
+    { ChainIdx::CHAIN_0, 1, 11, static_cast<BrgNumber>(BrgName::BRG_MAX) },
+  };
+
+  if (Player::getInstance().is_idle() == false) {
+    DEBUG_INFO("Player is not idle, cannot play sequence step!");
+    return;
+  }
+
+  SequenceStep step = {
+    .leds = leds,
+    .size = LED_COUNT,
+    .ramp_down_duration_ms = 500,
+    .pause_duration_ms = 500,
+    .ramp_up_duration_ms = 500,
+    .pulse_duration_ms = 500,
+    .repetitions = 10,
+  };
+
+  Player::getInstance().play(step);
+}
+
 void setup() {
+  setCpuFrequencyMhz(240);
+
 #if (ENABLE_DEBUG_OUTPUT == 1)
   Serial.begin(115200);
 #endif
   DEBUG_INFO("%s", DIVIDER);
   DEBUG_INFO("Setup ESP32-daisy-chain [...]");
+  DEBUG_INFO("CPU frequency: %d MHz", getCpuFrequencyMhz());
 
   DaisyChain::getInstance().initialize();
+  Player::getInstance().initialize();
+
+  test_play();
 
   DEBUG_INFO("Setup ESP32-daisy-chain [OK]");
   DEBUG_INFO("%s", DIVIDER);
 }
 
 void loop() {
-  DaisyChain::getInstance().runTestShow();
+  Player::getInstance().run();
+
+  DaisyChain::getInstance().flush_chain(ChainIdx::CHAIN_0);
+  DaisyChain::getInstance().flush_chain(ChainIdx::CHAIN_1);
 }
-
-/*
-// Fill the dots one after the other with a color
-void colorWipe(uint16_t r, uint16_t g, uint16_t b, uint8_t wait) {
-  for (uint16_t i = 0; i < 8 * NUM_TLC59711; i++) {
-    chain0_.setLED(i, r, g, b);
-    chain0_.write();
-    delay(wait);
-  }
-}
-
-// Rainbow all LEDs at the same time, same color
-void rainbow(uint8_t wait) {
-  uint32_t i, j;
-
-  for (j = 0; j < 65535; j += 10) {
-    for (i = 0; i < 4 * NUM_TLC59711; i++) {
-      Wheel(i, (i + j) & 65535);
-    }
-    chain0_.write();
-    delay(wait);
-  }
-}
-
-// Slightly different, this makes the rainbow equally distributed throughout
-void rainbowCycle(uint8_t wait) {
-  uint32_t i, j;
-
-  for (j = 0; j < 65535; j += 10) { // 1 cycle of all colors on wheel
-    for (i = 0; i < 4 * NUM_TLC59711; i++) {
-      Wheel(i, ((i * 65535 / (4 * NUM_TLC59711)) + j) & 65535);
-    }
-    chain0_.write();
-    delay(wait);
-  }
-}
-
-// Input a value 0 to 4095 to get a color value.
-// The colours are a transition r - g - b - back to r.
-void Wheel(uint8_t ledn, uint16_t WheelPos) {
-  if (WheelPos < 21845) {
-    chain0_.setLED(ledn, 3 * WheelPos, 65535 - 3 * WheelPos, 0);
-  } else if (WheelPos < 43690) {
-    WheelPos -= 21845;
-    chain0_.setLED(ledn, 65535 - 3 * WheelPos, 0, 3 * WheelPos);
-  } else {
-    WheelPos -= 43690;
-    chain0_.setLED(ledn, 0, 3 * WheelPos, 65535 - 3 * WheelPos);
-  }
-}
-
-// All RGB Channels on full colour
-// Cycles trough all brightness settings from 0 up to 127
-void increaseBrightness() {
-  for (uint16_t i = 0; i < 8 * CHAIN_SIZE; i++) {
-    chain0_.setLED(i, 65535, 65535, 65535);
-  }
-  for (int i = 0; i < 128; i++) {
-    chain0_.simpleSetBrightness(i);
-    chain0_.write();
-    delay(100);
-  }
-}
-*/

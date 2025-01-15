@@ -1,6 +1,8 @@
 #ifndef CHAIN_CONFIG_H
 #define CHAIN_CONFIG_H
 
+#include <Arduino.h>
+
 #define ENABLE_DEBUG_OUTPUT 1
 
 // Number of chained boards
@@ -21,11 +23,21 @@ struct LedObj {
   BrgNumber brightness;
 };
 
+struct SequenceStep {
+  LedObj* leds;
+  size_t size;
+  uint32_t ramp_down_duration_ms;
+  uint32_t pause_duration_ms;
+  uint32_t ramp_up_duration_ms;
+  uint32_t pulse_duration_ms;
+  uint32_t repetitions;  // Actually repetitions + 1
+};
+
 enum class BrgName : BrgNumber {
   BRG_OFF = 0,
   BRG_LOW = 10,
   BRG_MEDIUM = 50,
-  BRG_HIGH = 100,
+  BRG_MAX = 100,
 };
 
 static const BrgName DEFAULT_BRIGHTNESS_CHAIN0[CHAIN_SIZE][LED_COUNT] = {
@@ -58,5 +70,8 @@ static const uint16_t BRIGHTNESS_LINEARIZATION_TABLE[101] = {
 };
 
 static const char DIVIDER[] = "<=====================================>";
+static const char ACCESS_POINT_SSID[] = "Sternenhimmel";
+static const char ACCESS_POINT_PASSWORD[] = "Sternenhimmel3";
+static const int WEB_SERVER_PORT = 80;
 
 #endif  // CHAIN_CONFIG_H
