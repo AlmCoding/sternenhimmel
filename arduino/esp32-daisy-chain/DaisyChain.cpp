@@ -133,13 +133,15 @@ void DaisyChain::flush_chain(ChainIdx idx, bool force) {
   }
 
   for (uint8_t tlc_idx = 0; tlc_idx < CHAIN_SIZE; tlc_idx++) {
-    for (uint8_t led_idx = 0; led_idx < (LED_COUNT / 3); led_idx++) {  // LED index is [0, 1, 2, 3]
-      uint16_t led_number = tlc_idx * (LED_COUNT / 3) + led_idx;
+    // Invert tlc_idx and led_idx to match the physical layout
+    uint16_t tlc_idx_inv = CHAIN_SIZE - tlc_idx - 1;
 
+    for (uint8_t led_idx = 0; led_idx < (LED_COUNT / 3); led_idx++) {  // LED index is [0, 1, 2, 3]
       uint16_t ch_r = linearize_brightness((*current_brightness)[tlc_idx][led_idx * 3]);
       uint16_t ch_g = linearize_brightness((*current_brightness)[tlc_idx][led_idx * 3 + 1]);
       uint16_t ch_b = linearize_brightness((*current_brightness)[tlc_idx][led_idx * 3 + 2]);
 
+      uint16_t led_number = tlc_idx_inv * (LED_COUNT / 3) + led_idx;
       chain->setLED(led_number, ch_r, ch_g, ch_b);
     }
   }
@@ -195,79 +197,3 @@ void DaisyChain::get_calibrated_leds(LedObj leds[], size_t size) const {
     }
   }
 }
-
-/*
-void DaisyChain::runTestShow() {
-  int delay_ms = 100;
-
-  for (uint16_t i = 0; i < LED_COUNT; i++) {
-    active_brightness0_[0][i] = 0;
-    active_brightness0_[1][i] = 100;
-  }
-  flush_chain(ChainIdx::CHAIN_0);
-  delay(delay_ms);
-
-  for (uint16_t i = 0; i < LED_COUNT; i++) {
-    active_brightness0_[0][i] = 10;
-    active_brightness0_[1][i] = 90;
-  }
-  flush_chain(ChainIdx::CHAIN_0);
-  delay(delay_ms);
-
-  for (uint16_t i = 0; i < LED_COUNT; i++) {
-    active_brightness0_[0][i] = 20;
-    active_brightness0_[1][i] = 80;
-  }
-  flush_chain(ChainIdx::CHAIN_0);
-  delay(delay_ms);
-
-  for (uint16_t i = 0; i < LED_COUNT; i++) {
-    active_brightness0_[0][i] = 30;
-    active_brightness0_[1][i] = 70;
-  }
-  flush_chain(ChainIdx::CHAIN_0);
-  delay(delay_ms);
-  for (uint16_t i = 0; i < LED_COUNT; i++) {
-    active_brightness0_[0][i] = 40;
-    active_brightness0_[1][i] = 60;
-  }
-  flush_chain(ChainIdx::CHAIN_0);
-  delay(delay_ms);
-  for (uint16_t i = 0; i < LED_COUNT; i++) {
-    active_brightness0_[0][i] = 50;
-    active_brightness0_[1][i] = 50;
-  }
-  flush_chain(ChainIdx::CHAIN_0);
-  delay(delay_ms);
-  for (uint16_t i = 0; i < LED_COUNT; i++) {
-    active_brightness0_[0][i] = 60;
-    active_brightness0_[1][i] = 40;
-  }
-  flush_chain(ChainIdx::CHAIN_0);
-  delay(delay_ms);
-  for (uint16_t i = 0; i < LED_COUNT; i++) {
-    active_brightness0_[0][i] = 70;
-    active_brightness0_[1][i] = 30;
-  }
-  flush_chain(ChainIdx::CHAIN_0);
-  delay(delay_ms);
-  for (uint16_t i = 0; i < LED_COUNT; i++) {
-    active_brightness0_[0][i] = 80;
-    active_brightness0_[1][i] = 20;
-  }
-  flush_chain(ChainIdx::CHAIN_0);
-  delay(delay_ms);
-  for (uint16_t i = 0; i < LED_COUNT; i++) {
-    active_brightness0_[0][i] = 90;
-    active_brightness0_[1][i] = 10;
-  }
-  flush_chain(ChainIdx::CHAIN_0);
-  delay(delay_ms);
-  for (uint16_t i = 0; i < LED_COUNT; i++) {
-    active_brightness0_[0][i] = 100;
-    active_brightness0_[1][i] = 0;
-  }
-  flush_chain(ChainIdx::CHAIN_0);
-  delay(delay_ms);
-}
-*/

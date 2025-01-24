@@ -29,19 +29,36 @@
 #endif
 
 void test_play() {
-  static LedObj leds[LED_COUNT] = {
+  static LedObj leds[] = {
     { ChainIdx::CHAIN_0, 0, 0, static_cast<BrgNumber>(BrgName::BRG_MAX) },
-    { ChainIdx::CHAIN_0, 0, 1, static_cast<BrgNumber>(BrgName::BRG_MAX) },
     { ChainIdx::CHAIN_0, 0, 2, static_cast<BrgNumber>(BrgName::BRG_MAX) },
-    { ChainIdx::CHAIN_0, 0, 3, static_cast<BrgNumber>(BrgName::BRG_MAX) },
     { ChainIdx::CHAIN_0, 0, 4, static_cast<BrgNumber>(BrgName::BRG_MAX) },
-    { ChainIdx::CHAIN_0, 0, 5, static_cast<BrgNumber>(BrgName::BRG_MAX) },
-    { ChainIdx::CHAIN_0, 1, 6, static_cast<BrgNumber>(BrgName::BRG_MAX) },
+    { ChainIdx::CHAIN_0, 0, 6, static_cast<BrgNumber>(BrgName::BRG_MAX) },
+    { ChainIdx::CHAIN_0, 0, 8, static_cast<BrgNumber>(BrgName::BRG_MAX) },
+    { ChainIdx::CHAIN_0, 0, 10, static_cast<BrgNumber>(BrgName::BRG_MAX) },
+
+    /*
+    { ChainIdx::CHAIN_0, 1, 1, static_cast<BrgNumber>(BrgName::BRG_MAX) },
+    { ChainIdx::CHAIN_0, 1, 3, static_cast<BrgNumber>(BrgName::BRG_MAX) },
+    { ChainIdx::CHAIN_0, 1, 5, static_cast<BrgNumber>(BrgName::BRG_MAX) },
     { ChainIdx::CHAIN_0, 1, 7, static_cast<BrgNumber>(BrgName::BRG_MAX) },
-    { ChainIdx::CHAIN_0, 1, 8, static_cast<BrgNumber>(BrgName::BRG_MAX) },
     { ChainIdx::CHAIN_0, 1, 9, static_cast<BrgNumber>(BrgName::BRG_MAX) },
-    { ChainIdx::CHAIN_0, 1, 10, static_cast<BrgNumber>(BrgName::BRG_MAX) },
     { ChainIdx::CHAIN_0, 1, 11, static_cast<BrgNumber>(BrgName::BRG_MAX) },
+
+    { ChainIdx::CHAIN_0, 2, 0, static_cast<BrgNumber>(BrgName::BRG_MAX) },
+    { ChainIdx::CHAIN_0, 2, 2, static_cast<BrgNumber>(BrgName::BRG_MAX) },
+    { ChainIdx::CHAIN_0, 2, 4, static_cast<BrgNumber>(BrgName::BRG_MAX) },
+    { ChainIdx::CHAIN_0, 2, 6, static_cast<BrgNumber>(BrgName::BRG_MAX) },
+    { ChainIdx::CHAIN_0, 2, 8, static_cast<BrgNumber>(BrgName::BRG_MAX) },
+    { ChainIdx::CHAIN_0, 2, 10, static_cast<BrgNumber>(BrgName::BRG_MAX) },
+
+    { ChainIdx::CHAIN_0, 3, 1, static_cast<BrgNumber>(BrgName::BRG_MAX) },
+    { ChainIdx::CHAIN_0, 3, 3, static_cast<BrgNumber>(BrgName::BRG_MAX) },
+    { ChainIdx::CHAIN_0, 3, 5, static_cast<BrgNumber>(BrgName::BRG_MAX) },
+    { ChainIdx::CHAIN_0, 3, 7, static_cast<BrgNumber>(BrgName::BRG_MAX) },
+    { ChainIdx::CHAIN_0, 3, 9, static_cast<BrgNumber>(BrgName::BRG_MAX) },
+    { ChainIdx::CHAIN_0, 3, 11, static_cast<BrgNumber>(BrgName::BRG_MAX) },
+    */
   };
 
   if (Player::getInstance().is_idle() == false) {
@@ -49,14 +66,17 @@ void test_play() {
     return;
   }
 
+  size_t size = sizeof(leds) / sizeof(LedObj);
+  DEBUG_INFO("Play test sequence step with %d LEDs", size);
+
   SequenceStep step = {
     .leds = leds,
-    .size = LED_COUNT,
+    .size = size,
     .ramp_down_duration_ms = 500,
     .pause_duration_ms = 500,
     .ramp_up_duration_ms = 500,
     .pulse_duration_ms = 500,
-    .repetitions = 10,
+    .repetitions = 1000,
   };
 
   Player::getInstance().play(step);

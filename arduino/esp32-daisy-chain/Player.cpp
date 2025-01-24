@@ -4,6 +4,7 @@
 #define DEBUG_ENABLE_PLAYER 1
 #if ((DEBUG_ENABLE_PLAYER == 1) && (ENABLE_DEBUG_OUTPUT == 1))
 #define DEBUG_INFO(f, ...) Serial.printf("[INF][Player]: " f "\n", ##__VA_ARGS__)
+#define DEBUG_ERROR(f, ...) Serial.printf("[ERR][Player]: " f "\n", ##__VA_ARGS__)
 #else
 #define DEBUG_INFO(...)
 #endif
@@ -25,8 +26,8 @@ void Player::play(const SequenceStep& step) {
   if (state_ != State::IDLE) {
     DEBUG_INFO("Player is not idle, cannot play sequence step!");
     return;
-  } else if (step.repetitions == 0) {
-    DEBUG_INFO("Repetitions must be greater than 0!");
+  } else if (is_step_valid(step) == false) {
+    DEBUG_ERROR("Invalid sequence step!");
     return;
   }
 
@@ -52,6 +53,34 @@ void Player::play(const SequenceStep& step) {
   repetitions_ = step.repetitions;
 
   state_ = State::RAMP_DOWN;
+}
+
+bool Player::is_step_valid(const SequenceStep& step) const {
+  if (step.leds == nullptr) {
+    DEBUG_ERROR("Invalid LEDs pointer!");
+    return false;
+  } else if (step.size > LED_COUNT_TOTAL) {
+    DEBUG_ERROR("Invalid LEDs size: %d", step.size);
+    return false;
+  } else if (step.repetitions == 0) {
+    DEBUG_ERROR("Repetitions must be greater than 0!");
+    return false;
+  }
+
+  for (size_t i = 0; i < step.size; i++) {
+    if (step.leds[i].chain_idx != ChainIdx::CHAIN_0 && step.leds[i].chain_idx != ChainIdx::CHAIN_1) {
+      DEBUG_ERROR("Invalid chain index: %d", step.leds[i].chain_idx);
+      return false;
+    } else if (step.leds[i].led_idx >= LED_COUNT) {
+      DEBUG_ERROR("Invalid LED index: %d", step.leds[i].led_idx);
+      return false;
+    } else if (step.leds[i].brightness > static_cast<BrgNumber>(BrgName::BRG_MAX)) {
+      DEBUG_ERROR("Invalid brightness value: %d", step.leds[i].brightness);
+      return false;
+    }
+  }
+
+  return true;
 }
 
 void Player::run() {

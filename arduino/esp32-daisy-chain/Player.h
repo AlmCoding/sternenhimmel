@@ -39,6 +39,7 @@ class Player {
   };
 
   Player() = default;
+  bool is_step_valid(const SequenceStep& step) const;
   uint32_t elapsed_time(uint32_t start_ms) const;
   bool run_ramp_down();
   bool run_pause();
