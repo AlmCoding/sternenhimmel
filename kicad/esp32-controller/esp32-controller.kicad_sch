@@ -7755,118 +7755,6 @@
 		)
 	)
 	(symbol
-		(lib_id "My_New_Library:SN65LVDS049")
-		(at 95.25 116.84 0)
-		(unit 1)
-		(exclude_from_sim no)
-		(in_bom yes)
-		(on_board yes)
-		(dnp no)
-		(fields_autoplaced yes)
-		(uuid "4ef86efc-2a8e-42c4-bf58-1c06a00af2ee")
-		(property "Reference" "U3"
-			(at 97.2059 91.44 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left)
-			)
-		)
-		(property "Value" "SN65LVDS049"
-			(at 97.2059 93.98 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left)
-			)
-		)
-		(property "Footprint" "Package_SO:TSSOP-16_4.4x5mm_P0.65mm"
-			(at 96.266 83.312 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Datasheet" "http://www.ti.com/lit/ds/symlink/sn65lvds049.pdf"
-			(at 95.25 80.772 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Description" ""
-			(at 95.25 116.84 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(pin "1"
-			(uuid "b6e16af1-780e-4ef6-8952-fbe8c7433463")
-		)
-		(pin "10"
-			(uuid "12d07e15-4863-4f2c-be0c-9c858eb8815c")
-		)
-		(pin "11"
-			(uuid "bde0b5bf-c8fe-415d-8836-caf8e63d4996")
-		)
-		(pin "12"
-			(uuid "1fa54299-f686-41a6-b2ab-78082d017b73")
-		)
-		(pin "13"
-			(uuid "ef39cdf9-9532-4d27-85c1-c9bd408ee4da")
-		)
-		(pin "14"
-			(uuid "46c2cfa9-a72a-4e74-a35b-fd51afc07dde")
-		)
-		(pin "15"
-			(uuid "ffb87942-9019-4bc2-a25d-44761213c4c8")
-		)
-		(pin "16"
-			(uuid "9be13669-e2d9-4cab-9525-af22356e0ea7")
-		)
-		(pin "2"
-			(uuid "d066e7b9-9c05-4ce6-9d65-a3a5e3373c07")
-		)
-		(pin "3"
-			(uuid "42d23e31-eb01-4570-a38a-211b59802276")
-		)
-		(pin "4"
-			(uuid "87a9848a-7b0e-42cd-be13-8071bc6971d6")
-		)
-		(pin "5"
-			(uuid "e61fe94e-23f8-4117-942e-57ca5e4a232c")
-		)
-		(pin "6"
-			(uuid "b995a33c-8a31-489d-8701-969d33813725")
-		)
-		(pin "7"
-			(uuid "f432b64e-d6fb-42ac-89f6-d6a37eda1cd1")
-		)
-		(pin "8"
-			(uuid "20aead24-2bc7-4191-b221-fedfca39fa31")
-		)
-		(pin "9"
-			(uuid "afb27139-23be-41a5-bf06-6d2bf6f568de")
-		)
-		(instances
-			(project "esp32-controller"
-				(path "/bfb88c66-3278-41a9-b822-09be2f151e4c"
-					(reference "U3")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
 		(lib_id "Device:C")
 		(at 114.3 181.61 0)
 		(unit 1)
@@ -9254,6 +9142,118 @@
 		)
 	)
 	(symbol
+		(lib_id "My_New_Library:SN65LVDS049")
+		(at 95.25 116.84 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "a8603117-c1e4-4050-a3bb-619eed936ac4")
+		(property "Reference" "U3"
+			(at 97.2059 91.44 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Value" "SN65LVDS049"
+			(at 97.2059 93.98 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Footprint" "Package_SO:TSSOP-16_4.4x5mm_P0.65mm"
+			(at 96.266 83.312 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" "http://www.ti.com/lit/ds/symlink/sn65lvds049.pdf"
+			(at 95.25 80.772 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" ""
+			(at 95.25 116.84 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(pin "1"
+			(uuid "022668d6-a5b9-47b1-b751-04c4d6017091")
+		)
+		(pin "10"
+			(uuid "d5d0920f-4200-417c-8b33-7dce715560b4")
+		)
+		(pin "11"
+			(uuid "d641cc93-3b3a-4520-9c8a-b951e3cf3782")
+		)
+		(pin "12"
+			(uuid "57402c31-133e-4436-bc0e-6557230a101f")
+		)
+		(pin "13"
+			(uuid "6afb2e83-cd80-4639-9f44-726e80d2e291")
+		)
+		(pin "14"
+			(uuid "c2f24bd8-2e56-4be5-98a2-424291099ec7")
+		)
+		(pin "15"
+			(uuid "d906d9e2-8945-42fe-8a2a-a2384314408b")
+		)
+		(pin "16"
+			(uuid "93626338-0df9-4542-9d4e-77a0959797a7")
+		)
+		(pin "2"
+			(uuid "50c916ad-b65b-4baf-8914-739d593b528d")
+		)
+		(pin "3"
+			(uuid "b042a87d-99b9-4770-9795-d2ee00f6497e")
+		)
+		(pin "4"
+			(uuid "6d8691bd-345a-4304-8033-ba4efa790979")
+		)
+		(pin "5"
+			(uuid "899f66c3-91db-45c4-a839-93802b9ef071")
+		)
+		(pin "6"
+			(uuid "bd3a6017-7f5e-4878-8d99-6cd09b31dd5c")
+		)
+		(pin "7"
+			(uuid "d0a62f00-7fa3-4061-8a43-f9cf39f79ac1")
+		)
+		(pin "8"
+			(uuid "e852ab87-abec-4466-a264-d7b01c7b8a3c")
+		)
+		(pin "9"
+			(uuid "c67af96f-1fc0-4532-94fd-a0ffc3413431")
+		)
+		(instances
+			(project "esp32-controller"
+				(path "/bfb88c66-3278-41a9-b822-09be2f151e4c"
+					(reference "U3")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
 		(lib_id "power:+12V")
 		(at 44.45 25.4 0)
 		(unit 1)
@@ -9734,7 +9734,7 @@
 		(on_board yes)
 		(dnp no)
 		(uuid "ca459aa1-724c-4e5e-a499-6fb839e59322")
-		(property "Reference" "SW2"
+		(property "Reference" "BOOT1"
 			(at 174.752 68.58 90)
 			(effects
 				(font
@@ -9789,7 +9789,7 @@
 		(instances
 			(project "esp32-controller"
 				(path "/bfb88c66-3278-41a9-b822-09be2f151e4c"
-					(reference "SW2")
+					(reference "BOOT1")
 					(unit 1)
 				)
 			)
@@ -9871,7 +9871,7 @@
 		(on_board yes)
 		(dnp no)
 		(uuid "cf6128d5-2f7a-4cdd-8ce2-b6320a263e38")
-		(property "Reference" "SW1"
+		(property "Reference" "RESET1"
 			(at 149.352 66.04 90)
 			(effects
 				(font
@@ -9926,7 +9926,7 @@
 		(instances
 			(project ""
 				(path "/bfb88c66-3278-41a9-b822-09be2f151e4c"
-					(reference "SW1")
+					(reference "RESET1")
 					(unit 1)
 				)
 			)
