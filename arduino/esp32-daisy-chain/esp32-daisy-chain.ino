@@ -338,4 +338,5 @@ void loop() {
 
   DaisyChain::getInstance().flush_chain(ChainIdx::CHAIN_0);
   DaisyChain::getInstance().flush_chain(ChainIdx::CHAIN_1);
+  DaisyChain::getInstance().flush_chain(ChainIdx::CHAIN_2);
 }
