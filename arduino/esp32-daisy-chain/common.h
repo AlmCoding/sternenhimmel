@@ -6,15 +6,18 @@
 #define ENABLE_DEBUG_OUTPUT 1
 
 // Number of chained boards
-constexpr size_t CHAIN_COUNT = 3;
-constexpr size_t CHAIN_SIZE = 20;
+constexpr size_t CHAIN_COUNT = 6;
+constexpr size_t CHAIN_SIZE = 10;
 constexpr size_t LED_COUNT = 12;
 constexpr size_t LED_COUNT_TOTAL = CHAIN_SIZE * LED_COUNT;
 
-enum class ChainIdx {
+enum class ChainIdx : uint8_t {
   CHAIN_0 = 0,
   CHAIN_1 = 1,
   CHAIN_2 = 2,
+  CHAIN_3 = 3,
+  CHAIN_4 = 4,
+  CHAIN_5 = 5,
   CHAIN_COUNT = CHAIN_COUNT,
 };
 
@@ -61,10 +64,10 @@ static const uint16_t BRIGHTNESS_LINEARIZATION_TABLE[101] = {
 
 static const char DIVIDER[] = "<=====================================>";
 static const char ACCESS_POINT_SSID[] = "Sternenhimmel";
-static const char ACCESS_POINT_PASSWORD[] = "Sternenhimmel3";
+static const char ACCESS_POINT_PASSWORD[] = "Sternenhimmel";
 static const int WEB_SERVER_PORT = 80;
 
-static const BrgName DEFAULT_BRIGHTNESS_CHAIN0[CHAIN_SIZE][LED_COUNT] = {
+static const BrgName DEFAULT_BRIGHTNESS_CHAIN_0[CHAIN_SIZE][LED_COUNT] = {
   { BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
     BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
     BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF },  // PCB0 (chain 0)
@@ -95,39 +98,9 @@ static const BrgName DEFAULT_BRIGHTNESS_CHAIN0[CHAIN_SIZE][LED_COUNT] = {
   { BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
     BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
     BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF },  // PCB9 (chain 0)
-  { BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF },  // PCB10 (chain 0)
-  { BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF },  // PCB11 (chain 0)
-  { BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF },  // PCB12 (chain 0)
-  { BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF },  // PCB13 (chain 0)
-  { BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF },  // PCB14 (chain 0)
-  { BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF },  // PCB15 (chain 0)
-  { BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF },  // PCB16 (chain 0)
-  { BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF },  // PCB17 (chain 0)
-  { BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF },  // PCB18 (chain 0)
-  { BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF },  // PCB19 (chain 0)
 };
 
-static const BrgName DEFAULT_BRIGHTNESS_CHAIN1[CHAIN_SIZE][LED_COUNT] = {
+static const BrgName DEFAULT_BRIGHTNESS_CHAIN_1[CHAIN_SIZE][LED_COUNT] = {
   { BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
     BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
     BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF },  // PCB0 (chain 1)
@@ -158,39 +131,9 @@ static const BrgName DEFAULT_BRIGHTNESS_CHAIN1[CHAIN_SIZE][LED_COUNT] = {
   { BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
     BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
     BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF },  // PCB9 (chain 1)
-  { BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF },  // PCB10 (chain 1)
-  { BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF },  // PCB11 (chain 1)
-  { BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF },  // PCB12 (chain 1)
-  { BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF },  // PCB13 (chain 1)
-  { BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF },  // PCB14 (chain 1)
-  { BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF },  // PCB15 (chain 1)
-  { BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF },  // PCB16 (chain 1)
-  { BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF },  // PCB17 (chain 1)
-  { BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF },  // PCB18 (chain 1)
-  { BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF },  // PCB19 (chain 1)
 };
 
-static const BrgName DEFAULT_BRIGHTNESS_CHAIN2[CHAIN_SIZE][LED_COUNT] = {
+static const BrgName DEFAULT_BRIGHTNESS_CHAIN_2[CHAIN_SIZE][LED_COUNT] = {
   { BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
     BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
     BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF },  // PCB0 (chain 2)
@@ -221,36 +164,105 @@ static const BrgName DEFAULT_BRIGHTNESS_CHAIN2[CHAIN_SIZE][LED_COUNT] = {
   { BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
     BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
     BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF },  // PCB9 (chain 2)
+};
+
+static const BrgName DEFAULT_BRIGHTNESS_CHAIN_3[CHAIN_SIZE][LED_COUNT] = {
   { BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
     BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF },  // PCB10 (chain 2)
+    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF },  // PCB0 (chain 3)
   { BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
     BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF },  // PCB11 (chain 2)
+    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF },  // PCB1 (chain 3)
   { BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
     BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF },  // PCB12 (chain 2)
+    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF },  // PCB2 (chain 3)
   { BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
     BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF },  // PCB13 (chain 2)
+    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF },  // PCB3 (chain 3)
   { BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
     BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF },  // PCB14 (chain 2)
+    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF },  // PCB4 (chain 3)
   { BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
     BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF },  // PCB15 (chain 2)
+    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF },  // PCB5 (chain 3)
   { BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
     BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF },  // PCB16 (chain 2)
+    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF },  // PCB6 (chain 3)
   { BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
     BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF },  // PCB17 (chain 2)
+    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF },  // PCB7 (chain 3)
   { BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
     BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF },  // PCB18 (chain 2)
+    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF },  // PCB8 (chain 3)
   { BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
     BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF },  // PCB19 (chain 2)
+    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF },  // PCB9 (chain 3)
+};
+
+static const BrgName DEFAULT_BRIGHTNESS_CHAIN_4[CHAIN_SIZE][LED_COUNT] = {
+  { BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
+    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
+    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF },  // PCB0 (chain 4)
+  { BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
+    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
+    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF },  // PCB1 (chain 4)
+  { BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
+    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
+    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF },  // PCB2 (chain 4)
+  { BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
+    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
+    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF },  // PCB3 (chain 4)
+  { BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
+    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
+    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF },  // PCB4 (chain 4)
+  { BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
+    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
+    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF },  // PCB5 (chain 4)
+  { BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
+    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
+    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF },  // PCB6 (chain 4)
+  { BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
+    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
+    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF },  // PCB7 (chain 4)
+  { BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
+    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
+    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF },  // PCB8 (chain 4)
+  { BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
+    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
+    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF },  // PCB9 (chain 4)
+};
+
+static const BrgName DEFAULT_BRIGHTNESS_CHAIN_5[CHAIN_SIZE][LED_COUNT] = {
+  { BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
+    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
+    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF },  // PCB0 (chain 5)
+  { BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
+    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
+    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF },  // PCB1 (chain 5)
+  { BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
+    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
+    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF },  // PCB2 (chain 5)
+  { BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
+    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
+    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF },  // PCB3 (chain 5)
+  { BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
+    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
+    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF },  // PCB4 (chain 5)
+  { BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
+    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
+    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF },  // PCB5 (chain 5)
+  { BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
+    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
+    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF },  // PCB6 (chain 5)
+  { BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
+    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
+    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF },  // PCB7 (chain 5)
+  { BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
+    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
+    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF },  // PCB8 (chain 5)
+  { BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
+    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
+    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF },  // PCB9 (chain 5)
 };
 
 #endif  // CHAIN_CONFIG_H

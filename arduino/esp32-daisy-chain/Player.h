@@ -21,8 +21,9 @@ class Player {
 
  private:
   constexpr static uint32_t RampStepSizeMin = 1;
-  constexpr static uint32_t RampTickTimeMinMs = 10;
+  constexpr static uint32_t RampTickTimeMinMs = 5;
   constexpr static uint32_t RampTickCountMax = static_cast<uint32_t>(BrgName::BRG_MAX) / RampStepSizeMin;
+  constexpr static int RunTogglePin = 32;
 
   enum class State {
     IDLE = 0,
@@ -47,6 +48,7 @@ class Player {
   bool run_pulse();
 
   State state_ = State::IDLE;
+  uint32_t last_run_ms_ = 0;
 
   LedObj* leds_ = nullptr;
   size_t size_ = 0;

@@ -13,14 +13,18 @@ void DaisyChain::initialize() {
   pinMode(Chain0SelectPin, OUTPUT);
   pinMode(Chain1SelectPin, OUTPUT);
   pinMode(Chain2SelectPin, OUTPUT);
+  pinMode(Chain3SelectPin, OUTPUT);
+  pinMode(Chain4SelectPin, OUTPUT);
+  pinMode(Chain5SelectPin, OUTPUT);
 
   // Select all chains for initialization
   digitalWrite(Chain0SelectPin, HIGH);
   digitalWrite(Chain1SelectPin, HIGH);
   digitalWrite(Chain2SelectPin, HIGH);
+  digitalWrite(Chain3SelectPin, HIGH);
+  digitalWrite(Chain4SelectPin, HIGH);
+  digitalWrite(Chain5SelectPin, HIGH);
 
-  chain_.begin();
-  chain_.write();
   chain_.begin();
   chain_.write();
 
@@ -33,6 +37,10 @@ void DaisyChain::initialize() {
 
   flush_chain(ChainIdx::CHAIN_0);
   flush_chain(ChainIdx::CHAIN_1);
+  flush_chain(ChainIdx::CHAIN_2);
+  flush_chain(ChainIdx::CHAIN_3);
+  flush_chain(ChainIdx::CHAIN_4);
+  flush_chain(ChainIdx::CHAIN_5);
   DEBUG_INFO("Initialize DaisyChain [OK]");
 }
 
@@ -44,6 +52,9 @@ bool DaisyChain::load_calibrated_values() {
    * - "calib_chain0" (uint8_t[CHAIN_SIZE][LED_COUNT])
    * - "calib_chain1" (uint8_t[CHAIN_SIZE][LED_COUNT])
    * - "calib_chain2" (uint8_t[CHAIN_SIZE][LED_COUNT])
+   * - "calib_chain3" (uint8_t[CHAIN_SIZE][LED_COUNT])
+   * - "calib_chain4" (uint8_t[CHAIN_SIZE][LED_COUNT])
+   * - "calib_chain5" (uint8_t[CHAIN_SIZE][LED_COUNT])
    */
   Preferences preferences;
   preferences.begin("calibration", false);  // open (create if needed) the namespace in RW mode
@@ -63,7 +74,10 @@ bool DaisyChain::load_calibrated_values() {
   if (preferences.isKey("calib_name") == false ||    //
       preferences.isKey("calib_chain0") == false ||  //
       preferences.isKey("calib_chain1") == false ||  //
-      preferences.isKey("calib_chain2") == false) {
+      preferences.isKey("calib_chain2") == false ||  //
+      preferences.isKey("calib_chain3") == false ||  //
+      preferences.isKey("calib_chain4") == false ||  //
+      preferences.isKey("calib_chain5") == false) {
     preferences.end();
     DEBUG_INFO("Calibration data incomplete!");
     return false;
@@ -74,10 +88,16 @@ bool DaisyChain::load_calibrated_values() {
   size_t length0 = preferences.getBytesLength("calib_chain0");
   size_t length1 = preferences.getBytesLength("calib_chain1");
   size_t length2 = preferences.getBytesLength("calib_chain2");
+  size_t length3 = preferences.getBytesLength("calib_chain3");
+  size_t length4 = preferences.getBytesLength("calib_chain4");
+  size_t length5 = preferences.getBytesLength("calib_chain5");
 
   if (length0 != sizeof(calibrated_brightness0_) ||  //
       length1 != sizeof(calibrated_brightness1_) ||  //
-      length2 != sizeof(calibrated_brightness2_)) {
+      length2 != sizeof(calibrated_brightness2_) ||  //
+      length3 != sizeof(calibrated_brightness3_) ||  //
+      length4 != sizeof(calibrated_brightness4_) ||  //
+      length5 != sizeof(calibrated_brightness5_)) {
     preferences.end();
     return false;
   }
@@ -85,6 +105,9 @@ bool DaisyChain::load_calibrated_values() {
   preferences.getBytes("calib_chain0", calibrated_brightness0_, sizeof(calibrated_brightness0_));
   preferences.getBytes("calib_chain1", calibrated_brightness1_, sizeof(calibrated_brightness1_));
   preferences.getBytes("calib_chain2", calibrated_brightness2_, sizeof(calibrated_brightness2_));
+  preferences.getBytes("calib_chain3", calibrated_brightness3_, sizeof(calibrated_brightness3_));
+  preferences.getBytes("calib_chain4", calibrated_brightness4_, sizeof(calibrated_brightness4_));
+  preferences.getBytes("calib_chain5", calibrated_brightness5_, sizeof(calibrated_brightness5_));
 
   preferences.end();
   DEBUG_INFO("Calibrated values loaded [OK]");
@@ -100,6 +123,9 @@ void DaisyChain::save_calibrated_values() {
   preferences.putBytes("calib_chain0", calibrated_brightness0_, sizeof(calibrated_brightness0_));
   preferences.putBytes("calib_chain1", calibrated_brightness1_, sizeof(calibrated_brightness1_));
   preferences.putBytes("calib_chain2", calibrated_brightness2_, sizeof(calibrated_brightness2_));
+  preferences.putBytes("calib_chain3", calibrated_brightness3_, sizeof(calibrated_brightness3_));
+  preferences.putBytes("calib_chain4", calibrated_brightness4_, sizeof(calibrated_brightness4_));
+  preferences.putBytes("calib_chain5", calibrated_brightness5_, sizeof(calibrated_brightness5_));
 
   preferences.end();
   DEBUG_INFO("Calibrated values saved [OK]");
@@ -113,9 +139,12 @@ bool DaisyChain::migrate_calibration_data(uint8_t from_version) {
 void DaisyChain::load_default_values() {
   for (uint8_t tlc_idx = 0; tlc_idx < CHAIN_SIZE; tlc_idx++) {
     for (uint8_t led_idx = 0; led_idx < LED_COUNT; led_idx++) {
-      calibrated_brightness0_[tlc_idx][led_idx] = static_cast<BrgNumber>(DEFAULT_BRIGHTNESS_CHAIN0[tlc_idx][led_idx]);
-      calibrated_brightness1_[tlc_idx][led_idx] = static_cast<BrgNumber>(DEFAULT_BRIGHTNESS_CHAIN1[tlc_idx][led_idx]);
-      calibrated_brightness2_[tlc_idx][led_idx] = static_cast<BrgNumber>(DEFAULT_BRIGHTNESS_CHAIN2[tlc_idx][led_idx]);
+      calibrated_brightness0_[tlc_idx][led_idx] = static_cast<BrgNumber>(DEFAULT_BRIGHTNESS_CHAIN_0[tlc_idx][led_idx]);
+      calibrated_brightness1_[tlc_idx][led_idx] = static_cast<BrgNumber>(DEFAULT_BRIGHTNESS_CHAIN_1[tlc_idx][led_idx]);
+      calibrated_brightness2_[tlc_idx][led_idx] = static_cast<BrgNumber>(DEFAULT_BRIGHTNESS_CHAIN_2[tlc_idx][led_idx]);
+      calibrated_brightness3_[tlc_idx][led_idx] = static_cast<BrgNumber>(DEFAULT_BRIGHTNESS_CHAIN_3[tlc_idx][led_idx]);
+      calibrated_brightness4_[tlc_idx][led_idx] = static_cast<BrgNumber>(DEFAULT_BRIGHTNESS_CHAIN_4[tlc_idx][led_idx]);
+      calibrated_brightness5_[tlc_idx][led_idx] = static_cast<BrgNumber>(DEFAULT_BRIGHTNESS_CHAIN_5[tlc_idx][led_idx]);
     }
   }
 }
@@ -124,9 +153,15 @@ void DaisyChain::apply_calibrated_values() {
   memcpy(active_brightness0_, calibrated_brightness0_, sizeof(active_brightness0_));
   memcpy(active_brightness1_, calibrated_brightness1_, sizeof(active_brightness1_));
   memcpy(active_brightness2_, calibrated_brightness2_, sizeof(active_brightness2_));
+  memcpy(active_brightness3_, calibrated_brightness3_, sizeof(active_brightness3_));
+  memcpy(active_brightness4_, calibrated_brightness4_, sizeof(active_brightness4_));
+  memcpy(active_brightness5_, calibrated_brightness5_, sizeof(active_brightness5_));
   chain0_changed_ = true;
   chain1_changed_ = true;
   chain2_changed_ = true;
+  chain3_changed_ = true;
+  chain4_changed_ = true;
+  chain5_changed_ = true;
 }
 
 void DaisyChain::flush_chain(ChainIdx idx, bool force) {
@@ -153,6 +188,27 @@ void DaisyChain::flush_chain(ChainIdx idx, bool force) {
       }
       chain2_changed_ = false;
       current_brightness = &active_brightness2_;
+      break;
+    case ChainIdx::CHAIN_3:
+      if (chain3_changed_ == false && force == false) {
+        return;
+      }
+      chain3_changed_ = false;
+      current_brightness = &active_brightness3_;
+      break;
+    case ChainIdx::CHAIN_4:
+      if (chain4_changed_ == false && force == false) {
+        return;
+      }
+      chain4_changed_ = false;
+      current_brightness = &active_brightness4_;
+      break;
+    case ChainIdx::CHAIN_5:
+      if (chain5_changed_ == false && force == false) {
+        return;
+      }
+      chain5_changed_ = false;
+      current_brightness = &active_brightness5_;
       break;
     default:
       DEBUG_INFO("Invalid chain index!");
@@ -183,16 +239,49 @@ void DaisyChain::select_chain(ChainIdx idx) {
       digitalWrite(Chain0SelectPin, HIGH);
       digitalWrite(Chain1SelectPin, LOW);
       digitalWrite(Chain2SelectPin, LOW);
+      digitalWrite(Chain3SelectPin, LOW);
+      digitalWrite(Chain4SelectPin, LOW);
+      digitalWrite(Chain5SelectPin, LOW);
       break;
     case ChainIdx::CHAIN_1:
       digitalWrite(Chain0SelectPin, LOW);
       digitalWrite(Chain1SelectPin, HIGH);
       digitalWrite(Chain2SelectPin, LOW);
+      digitalWrite(Chain3SelectPin, LOW);
+      digitalWrite(Chain4SelectPin, LOW);
+      digitalWrite(Chain5SelectPin, LOW);
       break;
     case ChainIdx::CHAIN_2:
       digitalWrite(Chain0SelectPin, LOW);
       digitalWrite(Chain1SelectPin, LOW);
       digitalWrite(Chain2SelectPin, HIGH);
+      digitalWrite(Chain3SelectPin, LOW);
+      digitalWrite(Chain4SelectPin, LOW);
+      digitalWrite(Chain5SelectPin, LOW);
+      break;
+    case ChainIdx::CHAIN_3:
+      digitalWrite(Chain0SelectPin, LOW);
+      digitalWrite(Chain1SelectPin, LOW);
+      digitalWrite(Chain2SelectPin, LOW);
+      digitalWrite(Chain3SelectPin, HIGH);
+      digitalWrite(Chain4SelectPin, LOW);
+      digitalWrite(Chain5SelectPin, LOW);
+      break;
+    case ChainIdx::CHAIN_4:
+      digitalWrite(Chain0SelectPin, LOW);
+      digitalWrite(Chain1SelectPin, LOW);
+      digitalWrite(Chain2SelectPin, LOW);
+      digitalWrite(Chain3SelectPin, LOW);
+      digitalWrite(Chain4SelectPin, HIGH);
+      digitalWrite(Chain5SelectPin, LOW);
+      break;
+    case ChainIdx::CHAIN_5:
+      digitalWrite(Chain0SelectPin, LOW);
+      digitalWrite(Chain1SelectPin, LOW);
+      digitalWrite(Chain2SelectPin, LOW);
+      digitalWrite(Chain3SelectPin, LOW);
+      digitalWrite(Chain4SelectPin, LOW);
+      digitalWrite(Chain5SelectPin, HIGH);
       break;
     default:
       break;
@@ -218,6 +307,15 @@ void DaisyChain::get_active_leds(LedObj leds[], size_t size) const {
         break;
       case ChainIdx::CHAIN_2:
         leds[i].brightness = active_brightness2_[pcb_idx][led_idx];
+        break;
+      case ChainIdx::CHAIN_3:
+        leds[i].brightness = active_brightness3_[pcb_idx][led_idx];
+        break;
+      case ChainIdx::CHAIN_4:
+        leds[i].brightness = active_brightness4_[pcb_idx][led_idx];
+        break;
+      case ChainIdx::CHAIN_5:
+        leds[i].brightness = active_brightness5_[pcb_idx][led_idx];
         break;
       default:
         break;
@@ -245,6 +343,18 @@ void DaisyChain::set_active_leds(LedObj leds[], size_t size) {
         active_brightness2_[pcb_idx][led_idx] = brightness;
         chain2_changed_ = true;
         break;
+      case ChainIdx::CHAIN_3:
+        active_brightness3_[pcb_idx][led_idx] = brightness;
+        chain3_changed_ = true;
+        break;
+      case ChainIdx::CHAIN_4:
+        active_brightness4_[pcb_idx][led_idx] = brightness;
+        chain4_changed_ = true;
+        break;
+      case ChainIdx::CHAIN_5:
+        active_brightness5_[pcb_idx][led_idx] = brightness;
+        chain5_changed_ = true;
+        break;
       default:
         break;
     }
@@ -266,6 +376,15 @@ void DaisyChain::get_calibrated_leds(LedObj leds[], size_t size) const {
         break;
       case ChainIdx::CHAIN_2:
         leds[i].brightness = calibrated_brightness2_[pcb_idx][led_idx];
+        break;
+      case ChainIdx::CHAIN_3:
+        leds[i].brightness = calibrated_brightness3_[pcb_idx][led_idx];
+        break;
+      case ChainIdx::CHAIN_4:
+        leds[i].brightness = calibrated_brightness4_[pcb_idx][led_idx];
+        break;
+      case ChainIdx::CHAIN_5:
+        leds[i].brightness = calibrated_brightness5_[pcb_idx][led_idx];
         break;
       default:
         break;

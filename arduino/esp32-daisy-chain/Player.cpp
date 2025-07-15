@@ -11,6 +11,9 @@
 
 void Player::initialize() {
   DEBUG_INFO("Initialize Player [...]");
+  pinMode(RunTogglePin, OUTPUT);
+  digitalWrite(RunTogglePin, LOW);
+  last_run_ms_ = millis();
   DEBUG_INFO("Initialize Player [OK]");
 }
 
@@ -57,10 +60,10 @@ void Player::play(const SequenceStep& step) {
 
 bool Player::is_step_valid(const SequenceStep& step) const {
   if (step.leds == nullptr) {
-    DEBUG_ERROR("Invalid LEDs pointer!");
+    DEBUG_ERROR("Invalid leds pointer!");
     return false;
   } else if (step.size > LED_COUNT_TOTAL) {
-    DEBUG_ERROR("Invalid LEDs size: %d", step.size);
+    DEBUG_ERROR("Invalid leds size: %d", step.size);
     return false;
   } else if (step.repetitions == 0) {
     DEBUG_ERROR("Repetitions must be greater than 0!");
@@ -68,11 +71,11 @@ bool Player::is_step_valid(const SequenceStep& step) const {
   }
 
   for (size_t i = 0; i < step.size; i++) {
-    if (step.leds[i].chain_idx != ChainIdx::CHAIN_0 && step.leds[i].chain_idx != ChainIdx::CHAIN_1) {
+    if (static_cast<uint8_t>(step.leds[i].chain_idx) >= static_cast<uint8_t>(ChainIdx::CHAIN_COUNT)) {
       DEBUG_ERROR("Invalid chain index: %d", step.leds[i].chain_idx);
       return false;
     } else if (step.leds[i].led_idx >= LED_COUNT) {
-      DEBUG_ERROR("Invalid LED index: %d", step.leds[i].led_idx);
+      DEBUG_ERROR("Invalid led index: %d", step.leds[i].led_idx);
       return false;
     } else if (step.leds[i].brightness > static_cast<BrgNumber>(BrgName::BRG_MAX)) {
       DEBUG_ERROR("Invalid brightness value: %d", step.leds[i].brightness);
@@ -84,6 +87,13 @@ bool Player::is_step_valid(const SequenceStep& step) const {
 }
 
 void Player::run() {
+  uint32_t run_delay_ms = millis() - last_run_ms_;
+  if (run_delay_ms >= RampTickTimeMinMs) {
+    DEBUG_ERROR("Player run delay too long: %d ms", run_delay_ms);
+  }
+  digitalWrite(RunTogglePin, !digitalRead(RunTogglePin));
+  last_run_ms_ = millis();
+
   if (state_ == State::IDLE) {
     return;
   }

@@ -31,6 +31,9 @@ class DaisyChain {
   constexpr static int Chain0SelectPin = 15;
   constexpr static int Chain1SelectPin = 2;
   constexpr static int Chain2SelectPin = 4;
+  constexpr static int Chain3SelectPin = 4;
+  constexpr static int Chain4SelectPin = 4;
+  constexpr static int Chain5SelectPin = 4;
   // VSPI pins
   // constexpr static int Clock1Gpio = 18;
   // constexpr static int Data1Gpio = 23;
@@ -47,16 +50,25 @@ class DaisyChain {
   BrgNumber active_brightness0_[CHAIN_SIZE][LED_COUNT];
   BrgNumber active_brightness1_[CHAIN_SIZE][LED_COUNT];
   BrgNumber active_brightness2_[CHAIN_SIZE][LED_COUNT];
+  BrgNumber active_brightness3_[CHAIN_SIZE][LED_COUNT];
+  BrgNumber active_brightness4_[CHAIN_SIZE][LED_COUNT];
+  BrgNumber active_brightness5_[CHAIN_SIZE][LED_COUNT];
 
   char calibration_name_[CalibrationNameMaxLength] = "default";
   BrgNumber calibrated_brightness0_[CHAIN_SIZE][LED_COUNT];
   BrgNumber calibrated_brightness1_[CHAIN_SIZE][LED_COUNT];
   BrgNumber calibrated_brightness2_[CHAIN_SIZE][LED_COUNT];
+  BrgNumber calibrated_brightness3_[CHAIN_SIZE][LED_COUNT];
+  BrgNumber calibrated_brightness4_[CHAIN_SIZE][LED_COUNT];
+  BrgNumber calibrated_brightness5_[CHAIN_SIZE][LED_COUNT];
 
   Adafruit_TLC59711 chain_;
   bool chain0_changed_ = false;
   bool chain1_changed_ = false;
   bool chain2_changed_ = false;
+  bool chain3_changed_ = false;
+  bool chain4_changed_ = false;
+  bool chain5_changed_ = false;
 };
 
 #endif  // DAISY_CHAIN_H
