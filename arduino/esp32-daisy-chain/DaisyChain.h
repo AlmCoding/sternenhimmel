@@ -26,19 +26,19 @@ class DaisyChain {
   constexpr static uint8_t CalibrationFormatVersion = 0;
   constexpr static size_t CalibrationNameMaxLength = 32;
   // HSPI pins
-  constexpr static int SpiClockPin = 14;
-  constexpr static int SpiDataPin = 13;
-  constexpr static int Chain0SelectPin = 15;
-  constexpr static int Chain1SelectPin = 2;
-  constexpr static int Chain2SelectPin = 4;
-  constexpr static int Chain3SelectPin = 4;
-  constexpr static int Chain4SelectPin = 4;
-  constexpr static int Chain5SelectPin = 4;
-  // VSPI pins
-  // constexpr static int Clock1Gpio = 18;
-  // constexpr static int Data1Gpio = 23;
+  constexpr static int SpiClockFreq = 20000000;  // 10 MHz
+  constexpr static int SpiClockPin = 12;
+  constexpr static int SpiDataPin = 11;
+  constexpr static int Chain0SelectPin = 48;
+  constexpr static int Chain1SelectPin = 47;
+  constexpr static int Chain2SelectPin = 21;
+  constexpr static int Chain3SelectPin = 10;
+  constexpr static int Chain4SelectPin = 9;
+  constexpr static int Chain5SelectPin = 3;
 
-  DaisyChain() : chain_(CHAIN_SIZE, SpiClockPin, SpiDataPin) {}
+  DaisyChain() : spi_{ HSPI }, chain_{ CHAIN_SIZE, &spi_ } {
+    spi_.begin(SpiClockPin, -1, SpiDataPin, -1);
+  }
 
   void select_chain(ChainIdx idx);
   bool load_calibrated_values();
@@ -62,6 +62,7 @@ class DaisyChain {
   BrgNumber calibrated_brightness4_[CHAIN_SIZE][LED_COUNT];
   BrgNumber calibrated_brightness5_[CHAIN_SIZE][LED_COUNT];
 
+  SPIClass spi_;
   Adafruit_TLC59711 chain_;
   bool chain0_changed_ = false;
   bool chain1_changed_ = false;

@@ -30,7 +30,7 @@
 
 void test_play() {
   static LedObj leds[] = {
-    { ChainIdx::CHAIN_0, 0, 0, static_cast<BrgNumber>(BrgName::BRG_MEDIUM) },
+    //{ ChainIdx::CHAIN_0, 0, 0, static_cast<BrgNumber>(BrgName::BRG_MEDIUM) },
     { ChainIdx::CHAIN_0, 0, 1, static_cast<BrgNumber>(BrgName::BRG_MEDIUM) },
     { ChainIdx::CHAIN_0, 0, 2, static_cast<BrgNumber>(BrgName::BRG_MEDIUM) },
     { ChainIdx::CHAIN_0, 0, 3, static_cast<BrgNumber>(BrgName::BRG_MEDIUM) },
@@ -42,6 +42,71 @@ void test_play() {
     { ChainIdx::CHAIN_0, 0, 9, static_cast<BrgNumber>(BrgName::BRG_MEDIUM) },
     { ChainIdx::CHAIN_0, 0, 10, static_cast<BrgNumber>(BrgName::BRG_MEDIUM) },
     { ChainIdx::CHAIN_0, 0, 11, static_cast<BrgNumber>(BrgName::BRG_MEDIUM) },
+
+    { ChainIdx::CHAIN_1, 0, 0, static_cast<BrgNumber>(BrgName::BRG_MEDIUM) },
+    //{ ChainIdx::CHAIN_1, 0, 1, static_cast<BrgNumber>(BrgName::BRG_MEDIUM) },
+    { ChainIdx::CHAIN_1, 0, 2, static_cast<BrgNumber>(BrgName::BRG_MEDIUM) },
+    { ChainIdx::CHAIN_1, 0, 3, static_cast<BrgNumber>(BrgName::BRG_MEDIUM) },
+    { ChainIdx::CHAIN_1, 0, 4, static_cast<BrgNumber>(BrgName::BRG_MEDIUM) },
+    { ChainIdx::CHAIN_1, 0, 5, static_cast<BrgNumber>(BrgName::BRG_MEDIUM) },
+    { ChainIdx::CHAIN_1, 0, 6, static_cast<BrgNumber>(BrgName::BRG_MEDIUM) },
+    { ChainIdx::CHAIN_1, 0, 7, static_cast<BrgNumber>(BrgName::BRG_MEDIUM) },
+    { ChainIdx::CHAIN_1, 0, 8, static_cast<BrgNumber>(BrgName::BRG_MEDIUM) },
+    { ChainIdx::CHAIN_1, 0, 9, static_cast<BrgNumber>(BrgName::BRG_MEDIUM) },
+    { ChainIdx::CHAIN_1, 0, 10, static_cast<BrgNumber>(BrgName::BRG_MEDIUM) },
+    { ChainIdx::CHAIN_1, 0, 11, static_cast<BrgNumber>(BrgName::BRG_MEDIUM) },
+
+    { ChainIdx::CHAIN_2, 0, 0, static_cast<BrgNumber>(BrgName::BRG_MEDIUM) },
+    { ChainIdx::CHAIN_2, 0, 1, static_cast<BrgNumber>(BrgName::BRG_MEDIUM) },
+    //{ ChainIdx::CHAIN_2, 0, 2, static_cast<BrgNumber>(BrgName::BRG_MEDIUM) },
+    { ChainIdx::CHAIN_2, 0, 3, static_cast<BrgNumber>(BrgName::BRG_MEDIUM) },
+    { ChainIdx::CHAIN_2, 0, 4, static_cast<BrgNumber>(BrgName::BRG_MEDIUM) },
+    { ChainIdx::CHAIN_2, 0, 5, static_cast<BrgNumber>(BrgName::BRG_MEDIUM) },
+    { ChainIdx::CHAIN_2, 0, 6, static_cast<BrgNumber>(BrgName::BRG_MEDIUM) },
+    { ChainIdx::CHAIN_2, 0, 7, static_cast<BrgNumber>(BrgName::BRG_MEDIUM) },
+    { ChainIdx::CHAIN_2, 0, 8, static_cast<BrgNumber>(BrgName::BRG_MEDIUM) },
+    { ChainIdx::CHAIN_2, 0, 9, static_cast<BrgNumber>(BrgName::BRG_MEDIUM) },
+    { ChainIdx::CHAIN_2, 0, 10, static_cast<BrgNumber>(BrgName::BRG_MEDIUM) },
+    { ChainIdx::CHAIN_2, 0, 11, static_cast<BrgNumber>(BrgName::BRG_MEDIUM) },
+
+    { ChainIdx::CHAIN_3, 0, 0, static_cast<BrgNumber>(BrgName::BRG_MEDIUM) },
+    { ChainIdx::CHAIN_3, 0, 1, static_cast<BrgNumber>(BrgName::BRG_MEDIUM) },
+    { ChainIdx::CHAIN_3, 0, 2, static_cast<BrgNumber>(BrgName::BRG_MEDIUM) },
+    //{ ChainIdx::CHAIN_3, 0, 3, static_cast<BrgNumber>(BrgName::BRG_MEDIUM) },
+    { ChainIdx::CHAIN_3, 0, 4, static_cast<BrgNumber>(BrgName::BRG_MEDIUM) },
+    { ChainIdx::CHAIN_3, 0, 5, static_cast<BrgNumber>(BrgName::BRG_MEDIUM) },
+    { ChainIdx::CHAIN_3, 0, 6, static_cast<BrgNumber>(BrgName::BRG_MEDIUM) },
+    { ChainIdx::CHAIN_3, 0, 7, static_cast<BrgNumber>(BrgName::BRG_MEDIUM) },
+    { ChainIdx::CHAIN_3, 0, 8, static_cast<BrgNumber>(BrgName::BRG_MEDIUM) },
+    { ChainIdx::CHAIN_3, 0, 9, static_cast<BrgNumber>(BrgName::BRG_MEDIUM) },
+    { ChainIdx::CHAIN_3, 0, 10, static_cast<BrgNumber>(BrgName::BRG_MEDIUM) },
+    { ChainIdx::CHAIN_3, 0, 11, static_cast<BrgNumber>(BrgName::BRG_MEDIUM) },
+
+    { ChainIdx::CHAIN_4, 0, 0, static_cast<BrgNumber>(BrgName::BRG_MEDIUM) },
+    { ChainIdx::CHAIN_4, 0, 1, static_cast<BrgNumber>(BrgName::BRG_MEDIUM) },
+    { ChainIdx::CHAIN_4, 0, 2, static_cast<BrgNumber>(BrgName::BRG_MEDIUM) },
+    { ChainIdx::CHAIN_4, 0, 3, static_cast<BrgNumber>(BrgName::BRG_MEDIUM) },
+    //{ ChainIdx::CHAIN_4, 0, 4, static_cast<BrgNumber>(BrgName::BRG_MEDIUM) },
+    { ChainIdx::CHAIN_4, 0, 5, static_cast<BrgNumber>(BrgName::BRG_MEDIUM) },
+    { ChainIdx::CHAIN_4, 0, 6, static_cast<BrgNumber>(BrgName::BRG_MEDIUM) },
+    { ChainIdx::CHAIN_4, 0, 7, static_cast<BrgNumber>(BrgName::BRG_MEDIUM) },
+    { ChainIdx::CHAIN_4, 0, 8, static_cast<BrgNumber>(BrgName::BRG_MEDIUM) },
+    { ChainIdx::CHAIN_4, 0, 9, static_cast<BrgNumber>(BrgName::BRG_MEDIUM) },
+    { ChainIdx::CHAIN_4, 0, 10, static_cast<BrgNumber>(BrgName::BRG_MEDIUM) },
+    { ChainIdx::CHAIN_4, 0, 11, static_cast<BrgNumber>(BrgName::BRG_MEDIUM) },
+
+    { ChainIdx::CHAIN_5, 0, 0, static_cast<BrgNumber>(BrgName::BRG_MEDIUM) },
+    { ChainIdx::CHAIN_5, 0, 1, static_cast<BrgNumber>(BrgName::BRG_MEDIUM) },
+    { ChainIdx::CHAIN_5, 0, 2, static_cast<BrgNumber>(BrgName::BRG_MEDIUM) },
+    { ChainIdx::CHAIN_5, 0, 3, static_cast<BrgNumber>(BrgName::BRG_MEDIUM) },
+    { ChainIdx::CHAIN_5, 0, 4, static_cast<BrgNumber>(BrgName::BRG_MEDIUM) },
+    //{ ChainIdx::CHAIN_5, 0, 5, static_cast<BrgNumber>(BrgName::BRG_MEDIUM) },
+    { ChainIdx::CHAIN_5, 0, 6, static_cast<BrgNumber>(BrgName::BRG_MEDIUM) },
+    { ChainIdx::CHAIN_5, 0, 7, static_cast<BrgNumber>(BrgName::BRG_MEDIUM) },
+    { ChainIdx::CHAIN_5, 0, 8, static_cast<BrgNumber>(BrgName::BRG_MEDIUM) },
+    { ChainIdx::CHAIN_5, 0, 9, static_cast<BrgNumber>(BrgName::BRG_MEDIUM) },
+    { ChainIdx::CHAIN_5, 0, 10, static_cast<BrgNumber>(BrgName::BRG_MEDIUM) },
+    { ChainIdx::CHAIN_5, 0, 11, static_cast<BrgNumber>(BrgName::BRG_MEDIUM) },
 
     { ChainIdx::CHAIN_0, 1, 0, static_cast<BrgNumber>(BrgName::BRG_MEDIUM) },
     { ChainIdx::CHAIN_0, 1, 1, static_cast<BrgNumber>(BrgName::BRG_MEDIUM) },
@@ -159,6 +224,7 @@ void test_play() {
     { ChainIdx::CHAIN_0, 9, 9, static_cast<BrgNumber>(BrgName::BRG_MEDIUM) },
     { ChainIdx::CHAIN_0, 9, 10, static_cast<BrgNumber>(BrgName::BRG_MEDIUM) },
     { ChainIdx::CHAIN_0, 9, 11, static_cast<BrgNumber>(BrgName::BRG_MEDIUM) },
+
   };
 
   if (Player::getInstance().is_idle() == false) {
@@ -209,4 +275,7 @@ void loop() {
   DaisyChain::getInstance().flush_chain(ChainIdx::CHAIN_0);
   DaisyChain::getInstance().flush_chain(ChainIdx::CHAIN_1);
   DaisyChain::getInstance().flush_chain(ChainIdx::CHAIN_2);
+  DaisyChain::getInstance().flush_chain(ChainIdx::CHAIN_3);
+  DaisyChain::getInstance().flush_chain(ChainIdx::CHAIN_4);
+  DaisyChain::getInstance().flush_chain(ChainIdx::CHAIN_5);
 }

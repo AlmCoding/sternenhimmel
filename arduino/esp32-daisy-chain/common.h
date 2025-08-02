@@ -9,7 +9,7 @@
 constexpr size_t CHAIN_COUNT = 6;
 constexpr size_t CHAIN_SIZE = 10;
 constexpr size_t LED_COUNT = 12;
-constexpr size_t LED_COUNT_TOTAL = CHAIN_SIZE * LED_COUNT;
+constexpr size_t LED_COUNT_TOTAL = CHAIN_COUNT * CHAIN_SIZE * LED_COUNT;
 
 enum class ChainIdx : uint8_t {
   CHAIN_0 = 0,
