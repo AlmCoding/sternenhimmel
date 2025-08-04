@@ -17,7 +17,6 @@ void DaisyChain::initialize() {
   pinMode(Chain4SelectPin, OUTPUT);
   pinMode(Chain5SelectPin, OUTPUT);
 
-  // Select all chains for initialization
   digitalWrite(Chain0SelectPin, HIGH);
   digitalWrite(Chain1SelectPin, HIGH);
   digitalWrite(Chain2SelectPin, HIGH);
@@ -25,8 +24,8 @@ void DaisyChain::initialize() {
   digitalWrite(Chain4SelectPin, HIGH);
   digitalWrite(Chain5SelectPin, HIGH);
 
-  chain_.begin();
-  chain_.write();
+  chain_.init();
+  write_data();
 
   if (load_calibrated_values() == false) {
     DEBUG_INFO("Calibrated values not found, loading default values!");
@@ -224,13 +223,12 @@ void DaisyChain::flush_chain(ChainIdx idx, bool force) {
       uint16_t ch_g = linearize_brightness((*current_brightness)[tlc_idx][led_idx * 3 + 1]);
       uint16_t ch_b = linearize_brightness((*current_brightness)[tlc_idx][led_idx * 3 + 2]);
 
-      uint16_t led_number = tlc_idx_inv * (LED_COUNT / 3) + led_idx;
-      chain_.setLED(led_number, ch_r, ch_g, ch_b);
+      chain_.setLed(tlc_idx_inv, led_idx, ch_r, ch_g, ch_b);
     }
   }
 
   select_chain(idx);
-  chain_.write();
+  write_data();
 }
 
 void DaisyChain::select_chain(ChainIdx idx) {
@@ -286,6 +284,16 @@ void DaisyChain::select_chain(ChainIdx idx) {
     default:
       break;
   }
+}
+
+void DaisyChain::write_data() {
+  // Send data using DMA
+  spi_transaction_t trans = {};
+  trans.length = chain_.getChainBufferSize() * 8;
+  trans.tx_buffer = chain_.getChainBuffer();
+  trans.rx_buffer = nullptr;
+
+  ESP_ERROR_CHECK(spi_device_transmit(spi_, &trans));
 }
 
 uint16_t DaisyChain::linearize_brightness(BrgNumber brightness) {

@@ -2,8 +2,9 @@
 #define DAISY_CHAIN_H
 
 #include <SPI.h>
-#include "Adafruit_TLC59711.h"
+#include "TurboTLC59711.h"
 #include "common.h"
+#include "driver/spi_master.h"
 
 class DaisyChain {
  public:
@@ -26,7 +27,7 @@ class DaisyChain {
   constexpr static uint8_t CalibrationFormatVersion = 0;
   constexpr static size_t CalibrationNameMaxLength = 32;
   // HSPI pins
-  constexpr static int SpiClockFreq = 20000000;  // 10 MHz
+  constexpr static int SpiClockFreq = 8000000;  // 8 MHz
   constexpr static int SpiClockPin = 12;
   constexpr static int SpiDataPin = 11;
   constexpr static int Chain0SelectPin = 48;
@@ -36,11 +37,28 @@ class DaisyChain {
   constexpr static int Chain4SelectPin = 9;
   constexpr static int Chain5SelectPin = 3;
 
-  DaisyChain() : spi_{ HSPI }, chain_{ CHAIN_SIZE, &spi_ } {
-    spi_.begin(SpiClockPin, -1, SpiDataPin, -1);
+  DaisyChain() {
+    spi_bus_config_t buscfg = { .mosi_io_num = SpiDataPin,   //
+                                .miso_io_num = -1,           //
+                                .sclk_io_num = SpiClockPin,  //
+                                .quadwp_io_num = -1,         //
+                                .quadhd_io_num = -1 };
+    spi_device_interface_config_t devcfg = { .mode = SPI_MODE0,               // SPI mode 0
+                                             .clock_speed_hz = SpiClockFreq,  // Set clock speed
+                                             .spics_io_num = -1,              // Slave Select pin
+                                             .queue_size = 4,                 // SPI transaction queue size
+                                             .pre_cb = NULL,
+                                             .post_cb = NULL };
+
+    // Initialize SPI bus
+    ESP_ERROR_CHECK(spi_bus_initialize(SPI3_HOST, &buscfg, SPI_DMA_CH_AUTO));
+
+    // Add SPI device to bus
+    ESP_ERROR_CHECK(spi_bus_add_device(SPI3_HOST, &devcfg, &spi_));
   }
 
   void select_chain(ChainIdx idx);
+  void write_data();
   bool load_calibrated_values();
   void save_calibrated_values();
   bool migrate_calibration_data(uint8_t from_version);
@@ -62,8 +80,8 @@ class DaisyChain {
   BrgNumber calibrated_brightness4_[CHAIN_SIZE][LED_COUNT];
   BrgNumber calibrated_brightness5_[CHAIN_SIZE][LED_COUNT];
 
-  SPIClass spi_;
-  Adafruit_TLC59711 chain_;
+  spi_device_handle_t spi_ = nullptr;
+  TurboTLC59711<CHAIN_SIZE> chain_ = {};
   bool chain0_changed_ = false;
   bool chain1_changed_ = false;
   bool chain2_changed_ = false;

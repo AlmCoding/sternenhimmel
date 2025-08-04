@@ -21,7 +21,7 @@ class Player {
 
  private:
   constexpr static uint32_t RampStepSizeMin = 1;
-  constexpr static uint32_t RampTickTimeMinMs = 7;
+  constexpr static uint32_t RampTickTimeMinMs = 5;
   constexpr static uint32_t RampTickCountMax = static_cast<uint32_t>(BrgName::BRG_MAX) / RampStepSizeMin;
   constexpr static int RunTogglePin = 38; // TP1 on pcb
 
