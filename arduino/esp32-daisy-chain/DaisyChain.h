@@ -21,6 +21,7 @@ class DaisyChain {
   void set_active_leds(LedObj leds[], size_t size);
   void get_calibrated_leds(LedObj leds[], size_t size) const;
   void apply_calibrated_values();
+  void flush_all();
   void flush_chain(ChainIdx idx, bool force = false);
 
  private:

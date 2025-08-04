@@ -16,14 +16,14 @@ class Player {
   void initialize();
   bool is_idle() const;
   void abort();
-  void play(const SequenceStep& step);
+  void play_sequence(const SequenceStep sequence[], size_t count);
   void run();
 
  private:
   constexpr static uint32_t RampStepSizeMin = 1;
   constexpr static uint32_t RampTickTimeMinMs = 5;
   constexpr static uint32_t RampTickCountMax = static_cast<uint32_t>(BrgName::BRG_MAX) / RampStepSizeMin;
-  constexpr static int RunTogglePin = 38; // TP1 on pcb
+  constexpr static int RunTogglePin = 38;  // TP1 on pcb
 
   enum class State {
     IDLE = 0,
@@ -40,6 +40,7 @@ class Player {
   };
 
   Player() = default;
+  void play_step(const SequenceStep& step);
   bool is_step_valid(const SequenceStep& step) const;
   uint32_t elapsed_time(uint32_t start_ms) const;
   bool run_ramp_down();
@@ -49,6 +50,10 @@ class Player {
 
   State state_ = State::IDLE;
   uint32_t last_run_ms_ = 0;
+
+  const SequenceStep* sequence_ = nullptr;
+  size_t step_count_ = 0;
+  size_t step_index_ = 0;
 
   LedObj* leds_ = nullptr;
   size_t size_ = 0;

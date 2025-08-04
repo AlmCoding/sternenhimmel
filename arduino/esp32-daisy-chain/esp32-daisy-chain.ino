@@ -300,6 +300,7 @@ void test_play() {
   size_t size = sizeof(leds) / sizeof(LedObj);
   DEBUG_INFO("Play test sequence step with %d LEDs", size);
 
+  static SequenceStep steps[2];
   SequenceStep step = {
     .leds = leds,
     .size = size,
@@ -307,12 +308,17 @@ void test_play() {
     .pause_duration_ms = 500,
     .ramp_up_duration_ms = 500,
     .pulse_duration_ms = 500,
-    .repetitions = 1000,
+    .repetitions = 5,
     //.pause_brightness = static_cast<BrgNumber>(BrgName::BRG_OFF),
     //.pulse_brightness = static_cast<BrgNumber>(BrgName::BRG_MAX),
   };
+  steps[0] = step;
+  steps[1] = step;
+  steps[1].pause_duration_ms = 0;
+  steps[1].pulse_duration_ms = 0;
+  steps[1].repetitions = 10;
 
-  Player::getInstance().play(step);
+  Player::getInstance().play_sequence(steps, 2);
 }
 
 void setup() {
@@ -324,24 +330,18 @@ void setup() {
   DEBUG_INFO("%s", DIVIDER);
   DEBUG_INFO("Setup ESP32-daisy-chain [...]");
   DEBUG_INFO("CPU frequency: %d MHz", getCpuFrequencyMhz());
-  sleep(1);
+  sleep(0.5);
 
   DaisyChain::getInstance().initialize();
   Player::getInstance().initialize();
 
-  test_play();
-
   DEBUG_INFO("Setup ESP32-daisy-chain [OK]");
   DEBUG_INFO("%s", DIVIDER);
+
+  test_play();
 }
 
 void loop() {
   Player::getInstance().run();
-
-  DaisyChain::getInstance().flush_chain(ChainIdx::CHAIN_0);
-  DaisyChain::getInstance().flush_chain(ChainIdx::CHAIN_1);
-  DaisyChain::getInstance().flush_chain(ChainIdx::CHAIN_2);
-  DaisyChain::getInstance().flush_chain(ChainIdx::CHAIN_3);
-  DaisyChain::getInstance().flush_chain(ChainIdx::CHAIN_4);
-  DaisyChain::getInstance().flush_chain(ChainIdx::CHAIN_5);
+  DaisyChain::getInstance().flush_all();
 }

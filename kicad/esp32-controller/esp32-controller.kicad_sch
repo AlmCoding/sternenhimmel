@@ -3928,6 +3928,12 @@
 		(uuid "64df1653-a656-49b5-bd30-3e1527b10152")
 	)
 	(junction
+		(at 287.02 73.66)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "6bc2a129-57c8-458a-b9f0-3485683cc11c")
+	)
+	(junction
 		(at 308.61 144.78)
 		(diameter 0)
 		(color 0 0 0 0)
@@ -3986,6 +3992,12 @@
 		(diameter 0)
 		(color 0 0 0 0)
 		(uuid "970f4261-5097-4a8d-a449-65c1bfca9afd")
+	)
+	(junction
+		(at 304.8 71.12)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "9929671c-6a82-429a-9be8-84f8bb2ffc0a")
 	)
 	(junction
 		(at 77.47 190.5)
@@ -4762,7 +4774,7 @@
 	)
 	(wire
 		(pts
-			(xy 275.59 71.12) (xy 322.58 71.12)
+			(xy 275.59 71.12) (xy 304.8 71.12)
 		)
 		(stroke
 			(width 0)
@@ -5472,6 +5484,16 @@
 	)
 	(wire
 		(pts
+			(xy 287.02 73.66) (xy 322.58 73.66)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "42092981-0570-410a-8c32-67c7aca0c4cb")
+	)
+	(wire
+		(pts
 			(xy 38.1 110.49) (xy 48.26 110.49)
 		)
 		(stroke
@@ -5559,6 +5581,16 @@
 			(type default)
 		)
 		(uuid "49d5597e-0d3d-4d73-ba7d-c00326a7b211")
+	)
+	(wire
+		(pts
+			(xy 308.61 87.63) (xy 304.8 87.63)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "49da4858-af79-4279-8827-345a3461e8db")
 	)
 	(wire
 		(pts
@@ -6012,7 +6044,7 @@
 	)
 	(wire
 		(pts
-			(xy 275.59 73.66) (xy 322.58 73.66)
+			(xy 275.59 73.66) (xy 287.02 73.66)
 		)
 		(stroke
 			(width 0)
@@ -6282,6 +6314,16 @@
 	)
 	(wire
 		(pts
+			(xy 290.83 87.63) (xy 287.02 87.63)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "81951501-25e8-4181-9064-b107315bb78d")
+	)
+	(wire
+		(pts
 			(xy 77.47 81.28) (xy 77.47 82.55)
 		)
 		(stroke
@@ -6319,6 +6361,16 @@
 			(type default)
 		)
 		(uuid "833504dc-3200-4708-87b4-52c7fddaebf4")
+	)
+	(wire
+		(pts
+			(xy 287.02 87.63) (xy 287.02 73.66)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "83a00f90-4776-4222-90f1-dceb7aae857f")
 	)
 	(wire
 		(pts
@@ -7452,6 +7504,16 @@
 	)
 	(wire
 		(pts
+			(xy 304.8 71.12) (xy 304.8 87.63)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "d39ff676-38b5-4aaa-9169-42d9e4d868a7")
+	)
+	(wire
+		(pts
 			(xy 237.49 97.79) (xy 228.6 97.79)
 		)
 		(stroke
@@ -7552,6 +7614,16 @@
 	)
 	(wire
 		(pts
+			(xy 304.8 71.12) (xy 322.58 71.12)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "d88a73ab-af8c-4d7b-bd47-2e4189b23ef2")
+	)
+	(wire
+		(pts
 			(xy 168.91 168.91) (xy 193.04 168.91)
 		)
 		(stroke
@@ -7612,6 +7684,16 @@
 	)
 	(wire
 		(pts
+			(xy 308.61 86.36) (xy 308.61 87.63)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "db2a2384-7e07-4e4a-b636-db9d007cd25e")
+	)
+	(wire
+		(pts
 			(xy 60.96 190.5) (xy 77.47 190.5)
 		)
 		(stroke
@@ -7639,6 +7721,16 @@
 			(type default)
 		)
 		(uuid "dbadb96e-0206-46ea-91a6-071e277ea0f9")
+	)
+	(wire
+		(pts
+			(xy 290.83 86.36) (xy 290.83 87.63)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "dbae5684-2d48-426b-a409-38394ca00096")
 	)
 	(wire
 		(pts
@@ -9058,6 +9150,73 @@
 			(project "esp32-controller"
 				(path "/bfb88c66-3278-41a9-b822-09be2f151e4c"
 					(reference "#PWR055")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Connector:TestPoint")
+		(at 308.61 86.36 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "0728a2da-e285-42f7-81eb-27b849332844")
+		(property "Reference" "TP4"
+			(at 311.15 81.7879 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Value" "MOSI"
+			(at 311.15 84.3279 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Footprint" "TestPoint:TestPoint_Pad_D1.5mm"
+			(at 313.69 86.36 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" "~"
+			(at 313.69 86.36 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" "test point"
+			(at 308.61 86.36 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(pin "1"
+			(uuid "a767293b-018b-457b-8b0f-9b857532992f")
+		)
+		(instances
+			(project "esp32-controller"
+				(path "/bfb88c66-3278-41a9-b822-09be2f151e4c"
+					(reference "TP4")
 					(unit 1)
 				)
 			)
@@ -10648,6 +10807,73 @@
 			(project "esp32-controller"
 				(path "/bfb88c66-3278-41a9-b822-09be2f151e4c"
 					(reference "#PWR036")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Connector:TestPoint")
+		(at 290.83 86.36 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "401e8f62-4f17-4f71-a57e-a5bf19b2078a")
+		(property "Reference" "TP3"
+			(at 293.37 81.7879 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Value" "SCK"
+			(at 293.37 84.3279 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Footprint" "TestPoint:TestPoint_Pad_D1.5mm"
+			(at 295.91 86.36 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" "~"
+			(at 295.91 86.36 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" "test point"
+			(at 290.83 86.36 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(pin "1"
+			(uuid "d04f08b7-85b1-4f29-8d59-f29c92f09c2b")
+		)
+		(instances
+			(project ""
+				(path "/bfb88c66-3278-41a9-b822-09be2f151e4c"
+					(reference "TP3")
 					(unit 1)
 				)
 			)

@@ -25,15 +25,40 @@ void Player::abort() {
   state_ = State::IDLE;
 }
 
-void Player::play(const SequenceStep& step) {
-  if (state_ != State::IDLE) {
-    DEBUG_INFO("Player is not idle, cannot play sequence step!");
-    return;
-  } else if (is_step_valid(step) == false) {
-    DEBUG_ERROR("Invalid sequence step!");
+void Player::play_sequence(const SequenceStep sequence[], size_t count) {
+  if (count == 0 || sequence == nullptr) {
+    DEBUG_ERROR("Invalid sequence or count!");
     return;
   }
 
+  bool invalid_step = false;
+  for (size_t i = 0; i < count; i++) {
+    if (is_step_valid(sequence[i]) == false) {
+      DEBUG_ERROR("Invalid sequence step at index %d!", i);
+      invalid_step = true;
+      continue;
+    }
+  }
+
+  if (invalid_step == true) {
+    DEBUG_ERROR("One or more sequence steps are invalid, aborting sequence!");
+    return;
+  }
+
+  if (state_ != State::IDLE) {
+    DEBUG_INFO("Player is not idle, cannot play sequence step!");
+    return;
+  }
+
+  DEBUG_INFO("Play sequence with %d steps [...]", count);
+
+  sequence_ = const_cast<SequenceStep*>(sequence);
+  step_count_ = count;
+  step_index_ = 0;
+  play_step(sequence_[step_index_]);
+}
+
+void Player::play_step(const SequenceStep& step) {
   leds_ = step.leds;
   size_ = step.size;
 
@@ -55,6 +80,11 @@ void Player::play(const SequenceStep& step) {
 
   repetitions_ = step.repetitions;
 
+  DEBUG_INFO(
+      "Play step (%d/%d) with %d LEDs, ramp down: %d ms, pause: %d ms, ramp up: %d ms, pulse: %d ms, "
+      "repetitions: %d",
+      step_index_ + 1, step_count_, size_, ramp_down_.duration_ms, pause_.duration_ms, ramp_up_.duration_ms,
+      pulse_.duration_ms, repetitions_);
   state_ = State::RAMP_DOWN;
 }
 
@@ -125,10 +155,17 @@ void Player::run() {
   if (state_ == State::PULSE) {
     if (run_pulse() == true) {
       repetitions_--;
-      if (repetitions_ == 0) {
-        state_ = State::IDLE;
-      } else {
+      if (repetitions_ > 0) {
         state_ = State::RAMP_DOWN;
+      } else {
+        state_ = State::IDLE;
+
+        if (step_index_ < step_count_ - 1) {
+          step_index_++;
+          play_step(sequence_[step_index_]);
+        } else {
+          DEBUG_INFO("All steps of sequence played, returning to IDLE state [OK]");
+        }
       }
     } else {
       return;

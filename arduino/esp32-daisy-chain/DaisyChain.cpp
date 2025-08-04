@@ -163,6 +163,15 @@ void DaisyChain::apply_calibrated_values() {
   chain5_changed_ = true;
 }
 
+void DaisyChain::flush_all() {
+  flush_chain(ChainIdx::CHAIN_0);
+  flush_chain(ChainIdx::CHAIN_1);
+  flush_chain(ChainIdx::CHAIN_2);
+  flush_chain(ChainIdx::CHAIN_3);
+  flush_chain(ChainIdx::CHAIN_4);
+  flush_chain(ChainIdx::CHAIN_5);
+}
+
 void DaisyChain::flush_chain(ChainIdx idx, bool force) {
   BrgNumber(*current_brightness)[CHAIN_SIZE][LED_COUNT] = nullptr;
 
