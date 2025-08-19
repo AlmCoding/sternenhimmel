@@ -79,6 +79,7 @@ void Player::play_step(const SequenceStep& step) {
   pulse_.started = false;
 
   repetitions_ = step.repetitions;
+  return_to_idle_ = step.idle_return;
 
   DEBUG_INFO(
       "Play step (%d/%d) with %d LEDs, ramp down: %d ms, pause: %d ms, ramp up: %d ms, pulse: %d ms, "
@@ -107,7 +108,7 @@ bool Player::is_step_valid(const SequenceStep& step) const {
     } else if (step.leds[i].led_idx >= LED_COUNT) {
       DEBUG_ERROR("Invalid led index: %d", step.leds[i].led_idx);
       return false;
-    } else if (step.leds[i].brightness > static_cast<BrgNumber>(BrgName::BRG_MAX)) {
+    } else if (step.leds[i].brightness > static_cast<BrgNumber>(BrgName::MAX)) {
       DEBUG_ERROR("Invalid brightness value: %d", step.leds[i].brightness);
       return false;
     }
@@ -144,8 +145,10 @@ void Player::run() {
     }
   }
 
+  bool return_to_idle = (repetitions_ == 1) && (return_to_idle_ == true);
+
   if (state_ == State::RAMP_UP) {
-    if (run_ramp_up() == true) {
+    if (run_ramp_up(return_to_idle) == true) {
       state_ = State::PULSE;
     } else {
       return;
@@ -153,7 +156,7 @@ void Player::run() {
   }
 
   if (state_ == State::PULSE) {
-    if (run_pulse() == true) {
+    if (run_pulse(return_to_idle) == true) {
       repetitions_--;
       if (repetitions_ > 0) {
         state_ = State::RAMP_DOWN;
@@ -202,7 +205,7 @@ bool Player::run_ramp_down() {
 
     } else {
       ramp_tick_time_ms_ = RampTickTimeMinMs;
-      ramp_step_size_ = static_cast<uint32_t>(BrgName::BRG_MAX) / total_ramp_ticks_;
+      ramp_step_size_ = static_cast<uint32_t>(BrgName::MAX) / total_ramp_ticks_;
     }
     remaining_ramp_ticks_ = total_ramp_ticks_;
 
@@ -244,7 +247,7 @@ bool Player::run_pause() {
     // DEBUG_INFO("Start pause!");
 
     for (size_t i = 0; i < size_; i++) {
-      leds_[i].brightness = static_cast<BrgNumber>(BrgName::BRG_OFF);
+      leds_[i].brightness = static_cast<BrgNumber>(BrgName::OFF);
     }
     DaisyChain::getInstance().set_active_leds(leds_, size_);
 
@@ -260,7 +263,7 @@ bool Player::run_pause() {
   return complete;
 }
 
-bool Player::run_ramp_up() {
+bool Player::run_ramp_up(bool return_to_idle) {
   bool complete = false;
 
   if (ramp_up_.started == false) {
@@ -281,7 +284,7 @@ bool Player::run_ramp_up() {
 
     } else {
       ramp_tick_time_ms_ = RampTickTimeMinMs;
-      ramp_step_size_ = static_cast<uint32_t>(BrgName::BRG_MAX) / total_ramp_ticks_;
+      ramp_step_size_ = static_cast<uint32_t>(BrgName::MAX) / total_ramp_ticks_;
     }
     remaining_ramp_ticks_ = total_ramp_ticks_;
 
@@ -293,7 +296,13 @@ bool Player::run_ramp_up() {
 
     BrgNumber new_brightness = (total_ramp_ticks_ - remaining_ramp_ticks_) * ramp_step_size_;
     for (size_t i = 0; i < size_; i++) {
-      if (leds_[i].brightness < new_brightness) {
+      if (return_to_idle == true) {
+        DaisyChain::getInstance().get_idle_leds(leds_ + i, 1);
+        if (new_brightness < leds_[i].brightness) {
+          // Set new brightness because it is less than idle value
+          leds_[i].brightness = new_brightness;
+        }
+      } else if (leds_[i].brightness < new_brightness) {
         leds_[i].brightness = new_brightness;
       }
     }
@@ -311,7 +320,7 @@ bool Player::run_ramp_up() {
   return complete;
 }
 
-bool Player::run_pulse() {
+bool Player::run_pulse(bool return_to_idle) {
   bool complete = false;
 
   if (pulse_.started == false) {
@@ -320,10 +329,16 @@ bool Player::run_pulse() {
       complete = true;
       return complete;
     }
-    // DEBUG_INFO("Start pulse!");
 
-    for (size_t i = 0; i < size_; i++) {
-      leds_[i].brightness = static_cast<BrgNumber>(BrgName::BRG_MAX);
+    // DEBUG_INFO("Start pulse!");
+    if (return_to_idle == true) {
+      // Set all LEDs to idle brightness
+      DaisyChain::getInstance().get_idle_leds(leds_, size_);
+    } else {
+      // Set all LEDs to maximum brightness
+      for (size_t i = 0; i < size_; i++) {
+        leds_[i].brightness = static_cast<BrgNumber>(BrgName::MAX);
+      }
     }
     DaisyChain::getInstance().set_active_leds(leds_, size_);
 

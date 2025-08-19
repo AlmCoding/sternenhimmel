@@ -42,13 +42,20 @@ struct SequenceStep {
   // BrgNumber pulse_brightness;
   // bool pause_brightness_to_default;
   // bool pulse_brightness_to_default;
+  bool idle_return;
 };
 
 enum class BrgName : BrgNumber {
-  BRG_OFF = 0,
-  BRG_LOW = 10,
-  BRG_MEDIUM = 50,
-  BRG_MAX = 100,
+  OFF = 0,
+
+  GRAY = 5,
+  BLUE = 53,
+  GREEN = 72,
+  RED = 82,
+  ORANGE = 88,
+  YELLOW = 95,
+
+  MAX = 100,
 };
 
 // Gamma brightness lookup table <https://victornpb.github.io/gamma-table-generator>
@@ -68,201 +75,141 @@ static const char ACCESS_POINT_PASSWORD[] = "Sternenhimmel";
 static const int WEB_SERVER_PORT = 80;
 
 static const BrgName DEFAULT_BRIGHTNESS_CHAIN_0[CHAIN_SIZE][LED_COUNT] = {
-  { BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF },  // PCB0 (chain 0)
-  { BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF },  // PCB1 (chain 0)
-  { BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF },  // PCB2 (chain 0)
-  { BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF },  // PCB3 (chain 0)
-  { BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF },  // PCB4 (chain 0)
-  { BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF },  // PCB5 (chain 0)
-  { BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF },  // PCB6 (chain 0)
-  { BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF },  // PCB7 (chain 0)
-  { BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF },  // PCB8 (chain 0)
-  { BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF },  // PCB9 (chain 0)
+  { BrgName::GRAY, BrgName::GRAY, BrgName::OFF, BrgName::OFF, BrgName::OFF, BrgName::OFF,          //
+    BrgName::OFF, BrgName::GRAY, BrgName::GRAY, BrgName::GRAY, BrgName::ORANGE, BrgName::GRAY },   // PCB1
+  { BrgName::OFF, BrgName::OFF, BrgName::OFF, BrgName::GRAY, BrgName::GRAY, BrgName::GRAY,         //
+    BrgName::GRAY, BrgName::OFF, BrgName::GRAY, BrgName::BLUE, BrgName::GRAY, BrgName::GRAY },     // PCB2
+  { BrgName::GRAY, BrgName::GRAY, BrgName::GRAY, BrgName::BLUE, BrgName::OFF, BrgName::OFF,        //
+    BrgName::OFF, BrgName::OFF, BrgName::OFF, BrgName::OFF, BrgName::BLUE, BrgName::BLUE },        // PCB3
+  { BrgName::GRAY, BrgName::GRAY, BrgName::GRAY, BrgName::GRAY, BrgName::GRAY, BrgName::GRAY,      //
+    BrgName::GRAY, BrgName::BLUE, BrgName::BLUE, BrgName::GRAY, BrgName::GRAY, BrgName::ORANGE },  // PCB4
+  { BrgName::GREEN, BrgName::BLUE, BrgName::ORANGE, BrgName::GRAY, BrgName::GRAY, BrgName::BLUE,   //
+    BrgName::GRAY, BrgName::OFF, BrgName::OFF, BrgName::OFF, BrgName::OFF, BrgName::YELLOW },      // PCB5
+  { BrgName::OFF, BrgName::OFF, BrgName::OFF, BrgName::OFF, BrgName::OFF, BrgName::OFF,            //
+    BrgName::BLUE, BrgName::GRAY, BrgName::GRAY, BrgName::BLUE, BrgName::BLUE, BrgName::GRAY },    // PCB6
+  { BrgName::RED, BrgName::GREEN, BrgName::GREEN, BrgName::GRAY, BrgName::BLUE, BrgName::YELLOW,   //
+    BrgName::GREEN, BrgName::GRAY, BrgName::BLUE, BrgName::GREEN, BrgName::GRAY, BrgName::GRAY },  // PCB7
+  { BrgName::BLUE, BrgName::BLUE, BrgName::GRAY, BrgName::GREEN, BrgName::GREEN, BrgName::BLUE,    //
+    BrgName::BLUE, BrgName::OFF, BrgName::GRAY, BrgName::GREEN, BrgName::BLUE, BrgName::BLUE },    // PCB8
+  { BrgName::GREEN, BrgName::OFF, BrgName::ORANGE, BrgName::OFF, BrgName::OFF, BrgName::YELLOW,    //
+    BrgName::OFF, BrgName::BLUE, BrgName::OFF, BrgName::BLUE, BrgName::GREEN, BrgName::GRAY },     // PCB9
+  { BrgName::GREEN, BrgName::GRAY, BrgName::GREEN, BrgName::GRAY, BrgName::GREEN, BrgName::GRAY,   //
+    BrgName::BLUE, BrgName::GREEN, BrgName::OFF, BrgName::OFF, BrgName::OFF, BrgName::OFF },       // PCB10
 };
 
 static const BrgName DEFAULT_BRIGHTNESS_CHAIN_1[CHAIN_SIZE][LED_COUNT] = {
-  { BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF },  // PCB0 (chain 1)
-  { BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF },  // PCB1 (chain 1)
-  { BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF },  // PCB2 (chain 1)
-  { BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF },  // PCB3 (chain 1)
-  { BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF },  // PCB4 (chain 1)
-  { BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF },  // PCB5 (chain 1)
-  { BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF },  // PCB6 (chain 1)
-  { BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF },  // PCB7 (chain 1)
-  { BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF },  // PCB8 (chain 1)
-  { BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF },  // PCB9 (chain 1)
+  { BrgName::BLUE, BrgName::BLUE, BrgName::GRAY, BrgName::RED, BrgName::BLUE, BrgName::GRAY,         //
+    BrgName::GRAY, BrgName::GRAY, BrgName::GRAY, BrgName::GRAY, BrgName::GRAY, BrgName::GRAY },      // PCB11
+  { BrgName::BLUE, BrgName::OFF, BrgName::OFF, BrgName::OFF, BrgName::OFF, BrgName::OFF,             //
+    BrgName::OFF, BrgName::OFF, BrgName::OFF, BrgName::OFF, BrgName::GREEN, BrgName::YELLOW },       // PCB12
+  { BrgName::BLUE, BrgName::BLUE, BrgName::BLUE, BrgName::YELLOW, BrgName::OFF, BrgName::GRAY,       //
+    BrgName::GRAY, BrgName::GRAY, BrgName::BLUE, BrgName::GRAY, BrgName::GRAY, BrgName::GRAY },      // PCB13
+  { BrgName::GRAY, BrgName::GRAY, BrgName::BLUE, BrgName::OFF, BrgName::OFF, BrgName::OFF,           //
+    BrgName::ORANGE, BrgName::GRAY, BrgName::BLUE, BrgName::ORANGE, BrgName::GRAY, BrgName::BLUE },  // PCB14
+  { BrgName::BLUE, BrgName::GRAY, BrgName::BLUE, BrgName::BLUE, BrgName::BLUE, BrgName::GRAY,        //
+    BrgName::RED, BrgName::OFF, BrgName::OFF, BrgName::BLUE, BrgName::GRAY, BrgName::GRAY },         // PCB15
+  { BrgName::BLUE, BrgName::GRAY, BrgName::OFF, BrgName::GRAY, BrgName::OFF, BrgName::OFF,           //
+    BrgName::BLUE, BrgName::BLUE, BrgName::GRAY, BrgName::GREEN, BrgName::GRAY, BrgName::GREEN },    // PCB16
+  { BrgName::GRAY, BrgName::GREEN, BrgName::GRAY, BrgName::GRAY, BrgName::GRAY, BrgName::RED,        //
+    BrgName::GRAY, BrgName::GRAY, BrgName::GRAY, BrgName::GRAY, BrgName::GRAY, BrgName::RED },       // PCB17
+  { BrgName::YELLOW, BrgName::OFF, BrgName::GRAY, BrgName::GRAY, BrgName::GRAY, BrgName::GRAY,       //
+    BrgName::OFF, BrgName::GRAY, BrgName::YELLOW, BrgName::OFF, BrgName::GREEN, BrgName::BLUE },     // PCB18
+  { BrgName::BLUE, BrgName::GREEN, BrgName::GREEN, BrgName::OFF, BrgName::GRAY, BrgName::GRAY,       //
+    BrgName::OFF, BrgName::OFF, BrgName::OFF, BrgName::OFF, BrgName::GRAY, BrgName::BLUE },          // PCB19
+  { BrgName::GRAY, BrgName::RED, BrgName::OFF, BrgName::BLUE, BrgName::OFF, BrgName::ORANGE,         //
+    BrgName::GRAY, BrgName::OFF, BrgName::RED, BrgName::OFF, BrgName::GREEN, BrgName::GREEN },       // PCB20
 };
 
 static const BrgName DEFAULT_BRIGHTNESS_CHAIN_2[CHAIN_SIZE][LED_COUNT] = {
-  { BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF },  // PCB0 (chain 2)
-  { BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF },  // PCB1 (chain 2)
-  { BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF },  // PCB2 (chain 2)
-  { BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF },  // PCB3 (chain 2)
-  { BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF },  // PCB4 (chain 2)
-  { BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF },  // PCB5 (chain 2)
-  { BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF },  // PCB6 (chain 2)
-  { BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF },  // PCB7 (chain 2)
-  { BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF },  // PCB8 (chain 2)
-  { BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF },  // PCB9 (chain 2)
+  { BrgName::GRAY, BrgName::OFF, BrgName::OFF, BrgName::OFF, BrgName::OFF, BrgName::BLUE,         //
+    BrgName::GREEN, BrgName::OFF, BrgName::GRAY, BrgName::BLUE, BrgName::GREEN, BrgName::GRAY },  // PCB21
+  { BrgName::GRAY, BrgName::BLUE, BrgName::ORANGE, BrgName::GREEN, BrgName::GREEN, BrgName::OFF,  //
+    BrgName::GREEN, BrgName::OFF, BrgName::OFF, BrgName::OFF, BrgName::GRAY, BrgName::GRAY },     // PCB22
+  { BrgName::BLUE, BrgName::ORANGE, BrgName::OFF, BrgName::GRAY, BrgName::GRAY, BrgName::GRAY,    //
+    BrgName::GRAY, BrgName::GRAY, BrgName::GRAY, BrgName::BLUE, BrgName::GREEN, BrgName::GRAY },  // PCB23
+  { BrgName::GRAY, BrgName::GRAY, BrgName::BLUE, BrgName::GRAY, BrgName::GRAY, BrgName::GRAY,     //
+    BrgName::GRAY, BrgName::RED, BrgName::BLUE, BrgName::GRAY, BrgName::GRAY, BrgName::GRAY },    // PCB24
+  { BrgName::YELLOW, BrgName::GRAY, BrgName::BLUE, BrgName::GRAY, BrgName::GRAY, BrgName::BLUE,   //
+    BrgName::GRAY, BrgName::GRAY, BrgName::GREEN, BrgName::BLUE, BrgName::GRAY, BrgName::GRAY },  // PCB25
+  { BrgName::GRAY, BrgName::GREEN, BrgName::RED, BrgName::GRAY, BrgName::BLUE, BrgName::BLUE,     //
+    BrgName::GREEN, BrgName::GRAY, BrgName::RED, BrgName::GRAY, BrgName::GRAY, BrgName::GRAY },   // PCB26
+  { BrgName::GREEN, BrgName::BLUE, BrgName::BLUE, BrgName::BLUE, BrgName::GRAY, BrgName::OFF,     //
+    BrgName::RED, BrgName::OFF, BrgName::RED, BrgName::OFF, BrgName::BLUE, BrgName::GRAY },       // PCB27
+  { BrgName::GRAY, BrgName::GREEN, BrgName::OFF, BrgName::YELLOW, BrgName::OFF, BrgName::OFF,     //
+    BrgName::RED, BrgName::OFF, BrgName::OFF, BrgName::GRAY, BrgName::GRAY, BrgName::GRAY },      // PCB28
+  { BrgName::RED, BrgName::RED, BrgName::RED, BrgName::OFF, BrgName::BLUE, BrgName::BLUE,         //
+    BrgName::GRAY, BrgName::GRAY, BrgName::GRAY, BrgName::GRAY, BrgName::OFF, BrgName::RED },     // PCB29
+  { BrgName::BLUE, BrgName::GREEN, BrgName::GRAY, BrgName::OFF, BrgName::GRAY, BrgName::GRAY,     //
+    BrgName::GRAY, BrgName::GRAY, BrgName::OFF, BrgName::GRAY, BrgName::GRAY, BrgName::GRAY },    // PCB30
 };
 
 static const BrgName DEFAULT_BRIGHTNESS_CHAIN_3[CHAIN_SIZE][LED_COUNT] = {
-  { BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF },  // PCB0 (chain 3)
-  { BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF },  // PCB1 (chain 3)
-  { BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF },  // PCB2 (chain 3)
-  { BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF },  // PCB3 (chain 3)
-  { BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF },  // PCB4 (chain 3)
-  { BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF },  // PCB5 (chain 3)
-  { BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF },  // PCB6 (chain 3)
-  { BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF },  // PCB7 (chain 3)
-  { BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF },  // PCB8 (chain 3)
-  { BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF },  // PCB9 (chain 3)
+  { BrgName::GRAY, BrgName::GRAY, BrgName::OFF, BrgName::GRAY, BrgName::GRAY, BrgName::OFF,       //
+    BrgName::OFF, BrgName::OFF, BrgName::OFF, BrgName::OFF, BrgName::RED, BrgName::BLUE },        // PCB31
+  { BrgName::RED, BrgName::GREEN, BrgName::OFF, BrgName::BLUE, BrgName::OFF, BrgName::GRAY,       //
+    BrgName::GRAY, BrgName::GRAY, BrgName::GRAY, BrgName::GRAY, BrgName::GRAY, BrgName::GRAY },   // PCB32
+  { BrgName::GREEN, BrgName::BLUE, BrgName::GREEN, BrgName::GREEN, BrgName::GREEN, BrgName::RED,  //
+    BrgName::BLUE, BrgName::GRAY, BrgName::RED, BrgName::BLUE, BrgName::GREEN, BrgName::BLUE },   // PCB33
+  { BrgName::BLUE, BrgName::GRAY, BrgName::GRAY, BrgName::GRAY, BrgName::GRAY, BrgName::GRAY,     //
+    BrgName::BLUE, BrgName::GRAY, BrgName::BLUE, BrgName::RED, BrgName::RED, BrgName::YELLOW },   // PCB34
+  { BrgName::RED, BrgName::GRAY, BrgName::GRAY, BrgName::GRAY, BrgName::RED, BrgName::OFF,        //
+    BrgName::GRAY, BrgName::GRAY, BrgName::GRAY, BrgName::GRAY, BrgName::GRAY, BrgName::GRAY },   // PCB35
+  { BrgName::GRAY, BrgName::GRAY, BrgName::GRAY, BrgName::BLUE, BrgName::GRAY, BrgName::GRAY,     //
+    BrgName::OFF, BrgName::OFF, BrgName::OFF, BrgName::OFF, BrgName::GRAY, BrgName::GRAY },       // PCB36
+  { BrgName::GREEN, BrgName::GRAY, BrgName::BLUE, BrgName::GREEN, BrgName::RED, BrgName::BLUE,    //
+    BrgName::GRAY, BrgName::OFF, BrgName::GRAY, BrgName::GRAY, BrgName::BLUE, BrgName::GRAY },    // PCB37
+  { BrgName::GRAY, BrgName::OFF, BrgName::OFF, BrgName::GRAY, BrgName::GRAY, BrgName::GRAY,       //
+    BrgName::OFF, BrgName::OFF, BrgName::GREEN, BrgName::GRAY, BrgName::BLUE, BrgName::GRAY },    // PCB38
+  { BrgName::RED, BrgName::OFF, BrgName::OFF, BrgName::OFF, BrgName::BLUE, BrgName::GREEN,        //
+    BrgName::OFF, BrgName::GRAY, BrgName::ORANGE, BrgName::OFF, BrgName::OFF, BrgName::GRAY },    // PCB39
+  { BrgName::GRAY, BrgName::GRAY, BrgName::GRAY, BrgName::GRAY, BrgName::OFF, BrgName::OFF,       //
+    BrgName::OFF, BrgName::OFF, BrgName::OFF, BrgName::OFF, BrgName::OFF, BrgName::GRAY },        // PCB40
 };
 
 static const BrgName DEFAULT_BRIGHTNESS_CHAIN_4[CHAIN_SIZE][LED_COUNT] = {
-  { BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF },  // PCB0 (chain 4)
-  { BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF },  // PCB1 (chain 4)
-  { BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF },  // PCB2 (chain 4)
-  { BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF },  // PCB3 (chain 4)
-  { BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF },  // PCB4 (chain 4)
-  { BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF },  // PCB5 (chain 4)
-  { BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF },  // PCB6 (chain 4)
-  { BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF },  // PCB7 (chain 4)
-  { BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF },  // PCB8 (chain 4)
-  { BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF },  // PCB9 (chain 4)
+  { BrgName::GRAY, BrgName::GRAY, BrgName::GRAY, BrgName::GRAY, BrgName::OFF, BrgName::BLUE,       //
+    BrgName::GREEN, BrgName::GRAY, BrgName::OFF, BrgName::GREEN, BrgName::BLUE, BrgName::GRAY },   // PCB41
+  { BrgName::GRAY, BrgName::BLUE, BrgName::GRAY, BrgName::RED, BrgName::OFF, BrgName::BLUE,        //
+    BrgName::GRAY, BrgName::RED, BrgName::GRAY, BrgName::OFF, BrgName::GRAY, BrgName::GRAY },      // PCB42
+  { BrgName::GRAY, BrgName::OFF, BrgName::OFF, BrgName::BLUE, BrgName::OFF, BrgName::OFF,          //
+    BrgName::OFF, BrgName::GRAY, BrgName::BLUE, BrgName::BLUE, BrgName::GRAY, BrgName::BLUE },     // PCB43
+  { BrgName::BLUE, BrgName::GRAY, BrgName::BLUE, BrgName::BLUE, BrgName::BLUE, BrgName::GREEN,     //
+    BrgName::RED, BrgName::BLUE, BrgName::BLUE, BrgName::ORANGE, BrgName::GREEN, BrgName::GRAY },  // PCB44
+  { BrgName::BLUE, BrgName::BLUE, BrgName::BLUE, BrgName::RED, BrgName::GREEN, BrgName::GRAY,      //
+    BrgName::BLUE, BrgName::RED, BrgName::BLUE, BrgName::BLUE, BrgName::BLUE, BrgName::BLUE },     // PCB45
+  { BrgName::ORANGE, BrgName::ORANGE, BrgName::BLUE, BrgName::GRAY, BrgName::GRAY, BrgName::OFF,   //
+    BrgName::BLUE, BrgName::ORANGE, BrgName::GRAY, BrgName::OFF, BrgName::GRAY, BrgName::BLUE },   // PCB46
+  { BrgName::GRAY, BrgName::OFF, BrgName::GRAY, BrgName::GRAY, BrgName::GRAY, BrgName::OFF,        //
+    BrgName::BLUE, BrgName::OFF, BrgName::OFF, BrgName::GRAY, BrgName::OFF, BrgName::GRAY },       // PCB47
+  { BrgName::GRAY, BrgName::RED, BrgName::GRAY, BrgName::OFF, BrgName::GRAY, BrgName::GRAY,        //
+    BrgName::GRAY, BrgName::RED, BrgName::OFF, BrgName::OFF, BrgName::OFF, BrgName::OFF },         // PCB48
+  { BrgName::ORANGE, BrgName::OFF, BrgName::OFF, BrgName::GRAY, BrgName::OFF, BrgName::GRAY,       //
+    BrgName::OFF, BrgName::OFF, BrgName::OFF, BrgName::GRAY, BrgName::OFF, BrgName::GRAY },        // PCB49
+  { BrgName::OFF, BrgName::OFF, BrgName::OFF, BrgName::OFF, BrgName::OFF, BrgName::OFF,            //
+    BrgName::OFF, BrgName::OFF, BrgName::OFF, BrgName::GRAY, BrgName::GRAY, BrgName::GRAY },       // PCB50
 };
 
 static const BrgName DEFAULT_BRIGHTNESS_CHAIN_5[CHAIN_SIZE][LED_COUNT] = {
-  { BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF },  // PCB0 (chain 5)
-  { BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF },  // PCB1 (chain 5)
-  { BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF },  // PCB2 (chain 5)
-  { BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF },  // PCB3 (chain 5)
-  { BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF },  // PCB4 (chain 5)
-  { BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF },  // PCB5 (chain 5)
-  { BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF },  // PCB6 (chain 5)
-  { BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF },  // PCB7 (chain 5)
-  { BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF },  // PCB8 (chain 5)
-  { BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF,    //
-    BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF, BrgName::BRG_OFF },  // PCB9 (chain 5)
+  { BrgName::BLUE, BrgName::GRAY, BrgName::GRAY, BrgName::OFF, BrgName::OFF, BrgName::OFF,          //
+    BrgName::GRAY, BrgName::GRAY, BrgName::GRAY, BrgName::OFF, BrgName::OFF, BrgName::GRAY },       // PCB51
+  { BrgName::GRAY, BrgName::OFF, BrgName::OFF, BrgName::OFF, BrgName::GRAY, BrgName::GRAY,          //
+    BrgName::GRAY, BrgName::OFF, BrgName::GRAY, BrgName::OFF, BrgName::GRAY, BrgName::GRAY },       // PCB52
+  { BrgName::GRAY, BrgName::GRAY, BrgName::OFF, BrgName::OFF, BrgName::OFF, BrgName::OFF,           //
+    BrgName::OFF, BrgName::BLUE, BrgName::GRAY, BrgName::GRAY, BrgName::GRAY, BrgName::GRAY },      // PCB53
+  { BrgName::GRAY, BrgName::BLUE, BrgName::GRAY, BrgName::OFF, BrgName::GRAY, BrgName::OFF,         //
+    BrgName::GRAY, BrgName::GRAY, BrgName::GRAY, BrgName::OFF, BrgName::GRAY, BrgName::GRAY },      // PCB54
+  { BrgName::GRAY, BrgName::GRAY, BrgName::BLUE, BrgName::OFF, BrgName::BLUE, BrgName::OFF,         //
+    BrgName::YELLOW, BrgName::OFF, BrgName::BLUE, BrgName::GREEN, BrgName::BLUE, BrgName::BLUE },   // PCB55
+  { BrgName::GRAY, BrgName::GRAY, BrgName::GRAY, BrgName::GRAY, BrgName::RED, BrgName::BLUE,        //
+    BrgName::GRAY, BrgName::GRAY, BrgName::GRAY, BrgName::GREEN, BrgName::BLUE, BrgName::GRAY },    // PCB56
+  { BrgName::GREEN, BrgName::RED, BrgName::RED, BrgName::BLUE, BrgName::RED, BrgName::GRAY,         //
+    BrgName::YELLOW, BrgName::GRAY, BrgName::GRAY, BrgName::BLUE, BrgName::GREEN, BrgName::GRAY },  // PCB57
+  { BrgName::BLUE, BrgName::YELLOW, BrgName::RED, BrgName::OFF, BrgName::GRAY, BrgName::GRAY,       //
+    BrgName::OFF, BrgName::GREEN, BrgName::GREEN, BrgName::GRAY, BrgName::GREEN, BrgName::GRAY },   // PCB58
+  { BrgName::GRAY, BrgName::OFF, BrgName::BLUE, BrgName::GRAY, BrgName::YELLOW, BrgName::BLUE,      //
+    BrgName::GREEN, BrgName::BLUE, BrgName::BLUE, BrgName::RED, BrgName::RED, BrgName::GRAY },      // PCB59
+  { BrgName::BLUE, BrgName::BLUE, BrgName::OFF, BrgName::OFF, BrgName::OFF, BrgName::OFF,           //
+    BrgName::GREEN, BrgName::GRAY, BrgName::BLUE, BrgName::BLUE, BrgName::GRAY, BrgName::GRAY },    // PCB60
 };
 
 #endif  // CHAIN_CONFIG_H

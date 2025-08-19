@@ -22,7 +22,7 @@ class Player {
  private:
   constexpr static uint32_t RampStepSizeMin = 1;
   constexpr static uint32_t RampTickTimeMinMs = 5;
-  constexpr static uint32_t RampTickCountMax = static_cast<uint32_t>(BrgName::BRG_MAX) / RampStepSizeMin;
+  constexpr static uint32_t RampTickCountMax = static_cast<uint32_t>(BrgName::MAX) / RampStepSizeMin;
   constexpr static int RunTogglePin = 38;  // TP1 on pcb
 
   enum class State {
@@ -45,8 +45,8 @@ class Player {
   uint32_t elapsed_time(uint32_t start_ms) const;
   bool run_ramp_down();
   bool run_pause();
-  bool run_ramp_up();
-  bool run_pulse();
+  bool run_ramp_up(bool return_to_idle);
+  bool run_pulse(bool return_to_idle);
 
   State state_ = State::IDLE;
   uint32_t last_run_ms_ = 0;
@@ -69,6 +69,7 @@ class Player {
   uint32_t ramp_step_size_ = 0;
 
   uint32_t repetitions_ = 0;
+  bool return_to_idle_ = false;
 };
 
 #endif  // PLAYER_H
