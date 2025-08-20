@@ -2,3 +2,5 @@
 kicad/esp32-controller/esp32-controller-backups/
 
 kicad/led-driver/led-driver-backups/
+
+tools/ConfigTool/.idea/

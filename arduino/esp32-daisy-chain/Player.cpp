@@ -7,6 +7,7 @@
 #define DEBUG_ERROR(f, ...) Serial.printf("[ERR][Player]: " f "\n", ##__VA_ARGS__)
 #else
 #define DEBUG_INFO(...)
+#define DEBUG_ERROR(...)
 #endif
 
 void Player::initialize() {

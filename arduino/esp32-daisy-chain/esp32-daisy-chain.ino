@@ -1,22 +1,6 @@
-/***************************************************
-  This is an example for our Adafruit 12-channel PWM/LED driver
-
-  Pick one up today in the adafruit shop!
-  ------> http://www.adafruit.com/products/
-
-  These drivers uses SPI to communicate, 2 pins are required to
-  interface: Data and Clock. The boards are chainable
-
-  Adafruit invests time and resources providing this open source code,
-  please support Adafruit and open-source hardware by purchasing
-  products from Adafruit!
-
-  Written by Limor Fried/Ladyada for Adafruit Industries.
-  BSD license, all text above must be included in any redistribution
- ****************************************************/
-
-#include <SPI.h>
+// #include <SPI.h>
 #include "Adafruit_TLC59711.h"
+#include "BleManager.h"
 #include "DaisyChain.h"
 #include "Player.h"
 #include "common.h"
@@ -24,8 +8,10 @@
 #define DEBUG_ENABLE_MAIN 1
 #if ((DEBUG_ENABLE_MAIN == 1) && (ENABLE_DEBUG_OUTPUT == 1))
 #define DEBUG_INFO(f, ...) Serial.printf("[INF][Main]: " f "\n", ##__VA_ARGS__)
+#define DEBUG_ERROR(f, ...) Serial.printf("[ERR][Main]: " f "\n", ##__VA_ARGS__)
 #else
 #define DEBUG_INFO(...)
+#define DEBUG_ERROR(...)
 #endif
 
 void test_play() {
@@ -337,11 +323,12 @@ void setup() {
 
   DaisyChain::getInstance().initialize();
   Player::getInstance().initialize();
+  BleManager::getInstance().initialize();
 
   DEBUG_INFO("Setup ESP32-daisy-chain [OK]");
   DEBUG_INFO("%s", DIVIDER);
 
-  test_play();
+  // test_play();
 }
 
 void loop() {

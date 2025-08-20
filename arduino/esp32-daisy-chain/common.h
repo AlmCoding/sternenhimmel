@@ -145,7 +145,7 @@ static const BrgName DEFAULT_BRIGHTNESS_CHAIN_2[CHAIN_SIZE][LED_COUNT] = {
 
 static const BrgName DEFAULT_BRIGHTNESS_CHAIN_3[CHAIN_SIZE][LED_COUNT] = {
   { BrgName::GRAY, BrgName::GRAY, BrgName::OFF, BrgName::GRAY, BrgName::GRAY, BrgName::OFF,       //
-    BrgName::OFF, BrgName::OFF, BrgName::OFF, BrgName::OFF, BrgName::RED, BrgName::BLUE },        // PCB31
+    BrgName::OFF, BrgName::OFF, BrgName::OFF, BrgName::BLUE, BrgName::RED, BrgName::BLUE },       // PCB31
   { BrgName::RED, BrgName::GREEN, BrgName::OFF, BrgName::BLUE, BrgName::OFF, BrgName::GRAY,       //
     BrgName::GRAY, BrgName::GRAY, BrgName::GRAY, BrgName::GRAY, BrgName::GRAY, BrgName::GRAY },   // PCB32
   { BrgName::GREEN, BrgName::BLUE, BrgName::GREEN, BrgName::GREEN, BrgName::GREEN, BrgName::RED,  //
