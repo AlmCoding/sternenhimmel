@@ -5,6 +5,10 @@
 
 #define ENABLE_DEBUG_OUTPUT 1
 
+constexpr uint8_t FIRMWARE_VERSION_MAJOR = 0;
+constexpr uint8_t FIRMWARE_VERSION_MINOR = 0;
+constexpr uint8_t FIRMWARE_VERSION_PATCH = 1;
+
 // Number of chained boards
 constexpr size_t CHAIN_COUNT = 6;
 constexpr size_t CHAIN_SIZE = 10;

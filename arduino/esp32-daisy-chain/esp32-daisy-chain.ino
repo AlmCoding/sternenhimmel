@@ -1,6 +1,7 @@
 // #include <SPI.h>
 #include "Adafruit_TLC59711.h"
 #include "BleManager.h"
+#include "Controller.h"
 #include "DaisyChain.h"
 #include "Player.h"
 #include "common.h"
@@ -319,10 +320,11 @@ void setup() {
   DEBUG_INFO("%s", DIVIDER);
   DEBUG_INFO("Setup ESP32-daisy-chain [...]");
   DEBUG_INFO("CPU frequency: %d MHz", getCpuFrequencyMhz());
-  sleep(0.5);
+  sleep(0.42);
 
   DaisyChain::getInstance().initialize();
   Player::getInstance().initialize();
+  Controller::getInstance().initialize();
   BleManager::getInstance().initialize();
 
   DEBUG_INFO("Setup ESP32-daisy-chain [OK]");
@@ -332,6 +334,9 @@ void setup() {
 }
 
 void loop() {
+  BleManager::getInstance().run();
+  Controller::getInstance().run();
+
   Player::getInstance().run();
   DaisyChain::getInstance().flush_all();
 }

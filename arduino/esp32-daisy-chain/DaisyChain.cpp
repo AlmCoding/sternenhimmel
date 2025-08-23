@@ -134,7 +134,7 @@ bool DaisyChain::migrate_calibration_data(uint8_t from_version) {
   return false;
 }
 
-bool DaisyChain::save_calibrated_values(char calibration_name[]) {
+bool DaisyChain::save_calibrated_values(const char calibration_name[]) {
   if (calibration_name == nullptr || strnlen(calibration_name, sizeof(calibration_name_)) > CalibrationNameMaxLength) {
     DEBUG_ERROR("Invalid calibration name!");
     return false;
