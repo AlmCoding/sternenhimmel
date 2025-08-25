@@ -86,6 +86,11 @@ void BleManager::stopAdvertising() {
 void BleManager::onClientConnect(bool connected) {
   DEBUG_INFO("Client connected: %s", connected ? "true" : "false");
   connected_ = connected;
+
+  if (connected_ == false) {
+    subscribed_ = false;
+    startAdvertising();
+  }
 }
 
 void BleManager::onMtuChange(uint16_t mtu) {
@@ -131,7 +136,7 @@ bool BleManager::writeData(const uint8_t data[], size_t length) {
   tx_start_time_ = millis();
   tx_confirmed_ = true;
   tx_ongoing_ = true;
-  return true;  // writeDataChunk();
+  return true;
 }
 
 bool BleManager::writeDataChunk() {
@@ -139,6 +144,9 @@ bool BleManager::writeDataChunk() {
       tx_confirmed_ == false || tx_data_ == nullptr || tx_length_ == 0) {
     return false;
   }
+
+  // Reset timeout timer for every chunk sent
+  tx_start_time_ = millis();
 
   if (tx_index_ < tx_length_) {
     // More data to send, continue with next write cycle

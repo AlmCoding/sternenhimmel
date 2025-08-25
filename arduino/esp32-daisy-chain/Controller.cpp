@@ -5,8 +5,8 @@
 
 #define DEBUG_ENABLE_CONTROLLER 1
 #if ((DEBUG_ENABLE_CONTROLLER == 1) && (ENABLE_DEBUG_OUTPUT == 1))
-#define DEBUG_INFO(f, ...) Serial.printf("[INF][Controller]: " f "\n", ##__VA_ARGS__)
-#define DEBUG_ERROR(f, ...) Serial.printf("[ERR][Controller]: " f "\n", ##__VA_ARGS__)
+#define DEBUG_INFO(f, ...) Serial.printf("[INF][Ctrl]: " f "\n", ##__VA_ARGS__)
+#define DEBUG_ERROR(f, ...) Serial.printf("[ERR][Ctrl]: " f "\n", ##__VA_ARGS__)
 #else
 #define DEBUG_INFO(...)
 #define DEBUG_ERROR(...)
@@ -35,7 +35,6 @@ void Controller::dataReceivedCallback(const uint8_t data[], size_t length) {
   if (rx_ongoing_ == false) {
     // Start new RX operation
     rx_ongoing_ = true;
-    rx_start_time_ = millis();
     rx_index_ = 0;
   }
 
@@ -43,6 +42,9 @@ void Controller::dataReceivedCallback(const uint8_t data[], size_t length) {
     DEBUG_ERROR("RX buffer overflow!");
     return;
   }
+
+  // Reset timeout timer for every received data chunk
+  rx_start_time_ = millis();
 
   memcpy(rx_buffer_ + rx_index_, data, length);
   rx_index_ += length;
@@ -83,8 +85,8 @@ void Controller::processReceivedData() {
 
   // Parse JSON from the RX buffer
   DeserializationError error = deserializeJson(rx_json_doc_, rx_buffer_, rx_index_);
-  if (error) {
-    sendStatusResponse(-1, "Deserialize JSON string failed: %s", error.c_str());
+  if (error != DeserializationError::Ok) {
+    sendStatusResponse(-1, "Deserialize JSON string failed (%s)", error.c_str());
     return;
   }
 
@@ -104,10 +106,16 @@ void Controller::processReceivedData() {
 
   if (strcmp(cmd, CMD_GET_VERSION) == 0) {
     handleGetVersion();
+  } else if (strcmp(cmd, CMD_GET_CALIBRATION_NAME) == 0) {
+    handleGetCalibrationName();
   } else if (strcmp(cmd, CMD_DELETE_CALIBRATION) == 0) {
     handleDeleteCalibration();
   } else if (strcmp(cmd, CMD_SAVE_CALIBRATION) == 0) {
     handleSaveCalibration();
+  } else if (strcmp(cmd, CMD_SET_BRIGHTNESS) == 0) {
+    handleSetBrightness();
+  } else if (strcmp(cmd, CMD_GET_BRIGHTNESS) == 0) {
+    handleGetBrightness();
   } else if (strcmp(cmd, CMD_PLAY) == 0) {
     handlePlayShow();
   } else if (strcmp(cmd, CMD_STOP) == 0) {
@@ -121,6 +129,16 @@ void Controller::handleGetVersion() {
   DEBUG_INFO("CMD: '%s' [...]", CMD_GET_VERSION);
 
   sendStatusResponse(0, "v%d.%d.%d", FIRMWARE_VERSION_MAJOR, FIRMWARE_VERSION_MINOR, FIRMWARE_VERSION_PATCH);
+  DEBUG_INFO("CMD: '%s' [OK]", CMD_GET_VERSION);
+}
+
+void Controller::handleGetCalibrationName() {
+  DEBUG_INFO("CMD: '%s' [...]", CMD_GET_VERSION);
+
+  const char* name = DaisyChain::getInstance().get_calibration_name();
+  ASSERT(name != nullptr);
+
+  sendStatusResponse(0, "%s", name);
   DEBUG_INFO("CMD: '%s' [OK]", CMD_GET_VERSION);
 }
 
@@ -138,16 +156,95 @@ void Controller::handleDeleteCalibration() {
 void Controller::handleSaveCalibration() {
   DEBUG_INFO("CMD: '%s' [...]", CMD_SAVE_CALIBRATION);
 
-  if (rx_json_doc_.containsKey(KEY_TXT) == false) {
-    sendStatusResponse(-1, STATUS_MSG_MISSING_KEY, KEY_TXT);
+  if (rx_json_doc_.containsKey(KEY_NAME) == false) {
+    sendStatusResponse(-1, STATUS_MSG_MISSING_KEY, KEY_NAME);
     return;
   }
 
-  const char* name = rx_json_doc_[KEY_TXT];
+  const char* name = rx_json_doc_[KEY_NAME];
   DaisyChain::getInstance().save_calibrated_values(name);
 
   sendStatusResponse(0, "OK");
   DEBUG_INFO("CMD: '%s' [OK]", CMD_SAVE_CALIBRATION);
+}
+
+void Controller::handleSetBrightness() {
+  DEBUG_INFO("CMD: '%s' [...]", CMD_SET_BRIGHTNESS);
+
+  if (rx_json_doc_.containsKey(KEY_LEDS) == false) {
+    sendStatusResponse(-1, STATUS_MSG_MISSING_KEY, KEY_LEDS);
+    return;
+  }
+
+  LedObj obj;
+  JsonArray led;
+  size_t led_count = rx_json_doc_[KEY_LEDS].size();
+  for (size_t i = 0; i < led_count; i++) {
+    led = rx_json_doc_[KEY_LEDS][i];
+    uint8_t pcb_idx = led[0];
+    uint8_t led_idx = led[1];
+    uint8_t brightness = led[2];
+    DEBUG_INFO("  LED(%d, %d): brightness=%d", pcb_idx, led_idx, brightness);
+
+    if (setLedObj(obj, pcb_idx, led_idx, brightness) == false) {
+      sendStatusResponse(-1, "Invalid LED object: [%d, %d, %d]", pcb_idx, led_idx, brightness);
+      return;
+    }
+    DaisyChain::getInstance().set_idle_leds(&obj, 1);
+  }
+  DaisyChain::getInstance().apply_idle_values();
+
+  sendStatusResponse(0, "OK");
+  DEBUG_INFO("CMD: '%s' [OK]", CMD_SET_BRIGHTNESS);
+}
+
+void Controller::handleGetBrightness() {
+  DEBUG_INFO("CMD: '%s' [...]", CMD_GET_BRIGHTNESS);
+
+  if (rx_json_doc_.containsKey(KEY_LEDS) == false) {
+    sendStatusResponse(-1, STATUS_MSG_MISSING_KEY, KEY_LEDS);
+    return;
+  }
+
+  JsonArray response_leds = tx_json_doc_.createNestedArray(KEY_LEDS);
+  LedObj obj;
+  JsonArray led;
+  size_t led_count = rx_json_doc_[KEY_LEDS].size();
+  for (size_t i = 0; i < led_count; i++) {
+    led = rx_json_doc_[KEY_LEDS][i];
+    uint8_t pcb_idx = led[0];
+    uint8_t led_idx = led[1];
+    DEBUG_INFO("  LED(%d, %d)", pcb_idx, led_idx);
+
+    if (setLedObj(obj, pcb_idx, led_idx, 0) == false) {
+      sendStatusResponse(-1, "Invalid LED object: [%d, %d]", pcb_idx, led_idx);
+      return;
+    }
+    DaisyChain::getInstance().get_idle_leds(&obj, 1);
+    JsonArray resp_led = response_leds.createNestedArray();
+    resp_led.add(pcb_idx);
+    resp_led.add(led_idx);
+    resp_led.add(obj.brightness);
+  }
+
+  tx_json_doc_[KEY_RID] = current_rid_;
+  tx_json_doc_[KEY_MSG] = "OK";
+  tx_json_doc_[KEY_STS] = 0;
+
+  size_t len = serializeJson(tx_json_doc_, tx_buffer_, TxBufferSize);
+  if (len == 0 || len >= TxBufferSize) {
+    DEBUG_ERROR("Failed to serialize JSON response!");
+    return;
+  }
+  tx_buffer_[len] = '\0';  // Ensure null-terminated string
+  len++;                   // Include null terminator in length
+
+  DEBUG_INFO("Sending response (%d): %s", len, tx_buffer_);
+  if (BleManager::getInstance().writeData(tx_buffer_, len) == false) {
+    DEBUG_ERROR("Failed to send response via BLE!");
+  }
+
+  DEBUG_INFO("CMD: '%s' [OK]", CMD_GET_BRIGHTNESS);
 }
 
 void Controller::handlePlayShow() {
@@ -192,4 +289,20 @@ void Controller::sendStatusResponse(int status, const char info[], ...) {
     DEBUG_ERROR("Failed to send response via BLE!");
   }
   // BleManager::getInstance().writeData(reinterpret_cast<const uint8_t*>(tx_buffer_), len);
+}
+
+bool Controller::setLedObj(LedObj& obj, uint8_t pcb_idx, uint8_t led_idx, uint8_t brightness) {
+  pcb_idx -= 1;  // Convert to zero-based index
+  led_idx -= 1;  // Convert to zero-based index
+
+  if (pcb_idx >= (CHAIN_SIZE * CHAIN_COUNT) || led_idx >= LED_COUNT ||  //
+      brightness > static_cast<uint8_t>(BrgName::MAX)) {
+    return false;
+  }
+
+  obj.chain_idx = static_cast<ChainIdx>(pcb_idx / CHAIN_SIZE);
+  obj.pcb_idx = pcb_idx % CHAIN_SIZE;
+  obj.led_idx = led_idx;
+  obj.brightness = static_cast<BrgNumber>(brightness);
+  return true;
 }

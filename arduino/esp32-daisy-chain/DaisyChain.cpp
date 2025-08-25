@@ -50,7 +50,7 @@ void DaisyChain::initialize() {
   write_data();
 
   if (load_calibrated_values() == false) {
-    DEBUG_INFO("Calibrated values not found, loading default values!");
+    DEBUG_ERROR("Calibrated values not found!");
     load_default_values();
   }
   apply_idle_values();
@@ -168,17 +168,17 @@ bool DaisyChain::delete_calibration_data() {
   return true;
 }
 
+const char* DaisyChain::get_calibration_name() const {
+  return calibration_name_;
+}
+
 void DaisyChain::load_default_values() {
-  for (uint8_t tlc_idx = 0; tlc_idx < CHAIN_SIZE; tlc_idx++) {
-    for (uint8_t led_idx = 0; led_idx < LED_COUNT; led_idx++) {
-      idle_brightness0_[tlc_idx][led_idx] = static_cast<BrgNumber>(DEFAULT_BRIGHTNESS_CHAIN_0[tlc_idx][led_idx]);
-      idle_brightness1_[tlc_idx][led_idx] = static_cast<BrgNumber>(DEFAULT_BRIGHTNESS_CHAIN_1[tlc_idx][led_idx]);
-      idle_brightness2_[tlc_idx][led_idx] = static_cast<BrgNumber>(DEFAULT_BRIGHTNESS_CHAIN_2[tlc_idx][led_idx]);
-      idle_brightness3_[tlc_idx][led_idx] = static_cast<BrgNumber>(DEFAULT_BRIGHTNESS_CHAIN_3[tlc_idx][led_idx]);
-      idle_brightness4_[tlc_idx][led_idx] = static_cast<BrgNumber>(DEFAULT_BRIGHTNESS_CHAIN_4[tlc_idx][led_idx]);
-      idle_brightness5_[tlc_idx][led_idx] = static_cast<BrgNumber>(DEFAULT_BRIGHTNESS_CHAIN_5[tlc_idx][led_idx]);
-    }
-  }
+  memset(idle_brightness0_, 0, sizeof(idle_brightness0_));
+  memset(idle_brightness1_, 0, sizeof(idle_brightness1_));
+  memset(idle_brightness2_, 0, sizeof(idle_brightness2_));
+  memset(idle_brightness3_, 0, sizeof(idle_brightness3_));
+  memset(idle_brightness4_, 0, sizeof(idle_brightness4_));
+  memset(idle_brightness5_, 0, sizeof(idle_brightness5_));
 }
 
 void DaisyChain::apply_idle_values() {
@@ -412,6 +412,38 @@ void DaisyChain::get_idle_leds(LedObj leds[], size_t size) const {
         break;
       case ChainIdx::CHAIN_5:
         leds[i].brightness = idle_brightness5_[pcb_idx][led_idx];
+        break;
+      default:
+        break;
+    }
+  }
+}
+
+void DaisyChain::set_idle_leds(LedObj leds[], size_t size) {
+  for (size_t i = 0; i < size; i++) {
+    ChainIdx chain_idx = leds[i].chain_idx;
+    uint8_t pcb_idx = leds[i].pcb_idx;
+    uint8_t led_idx = leds[i].led_idx;
+    BrgNumber brightness = leds[i].brightness;
+
+    switch (chain_idx) {
+      case ChainIdx::CHAIN_0:
+        idle_brightness0_[pcb_idx][led_idx] = brightness;
+        break;
+      case ChainIdx::CHAIN_1:
+        idle_brightness1_[pcb_idx][led_idx] = brightness;
+        break;
+      case ChainIdx::CHAIN_2:
+        idle_brightness2_[pcb_idx][led_idx] = brightness;
+        break;
+      case ChainIdx::CHAIN_3:
+        idle_brightness3_[pcb_idx][led_idx] = brightness;
+        break;
+      case ChainIdx::CHAIN_4:
+        idle_brightness4_[pcb_idx][led_idx] = brightness;
+        break;
+      case ChainIdx::CHAIN_5:
+        idle_brightness5_[pcb_idx][led_idx] = brightness;
         break;
       default:
         break;

@@ -4,3 +4,11 @@ kicad/esp32-controller/esp32-controller-backups/
 kicad/led-driver/led-driver-backups/
 
 tools/ConfigTool/.idea/
+
+tools/ConfigTool/__pycache__/
+
+tools/ConfigTool/tests/__pycache__/
+
+arduino/esp32-daisy-chain/build/
+
+arduino/esp32-daisy-chain/.$info.drawio.bkp

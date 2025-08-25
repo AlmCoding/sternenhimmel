@@ -5,21 +5,27 @@
 #include "common.h"
 
 class Controller {
-  constexpr static uint32_t RxTimeout = 1000;       // Timeout for RX in milliseconds
-  constexpr static size_t RxBufferSize = 1024 * 8;  // Size of the RX buffer
-  constexpr static size_t TxBufferSize = 1024 * 2;  // Size of the TX buffer
+  constexpr static uint32_t RxTimeout = 1000;        // Timeout for RX in milliseconds
+  constexpr static size_t RxBufferSize = 1024 * 10;  // Size of the RX buffer
+  constexpr static size_t TxBufferSize = 1024 * 10;  // Size of the TX buffer
 
   constexpr static char KEY_RID[] = "rid";
-  constexpr static char KEY_CMD[] = "cmd";
-  constexpr static char KEY_TXT[] = "txt";
 
   // For status response
   constexpr static char KEY_MSG[] = "msg";
   constexpr static char KEY_STS[] = "sts";
 
+  // For received commands
+  constexpr static char KEY_CMD[] = "cmd";
+  constexpr static char KEY_NAME[] = "name";
+  constexpr static char KEY_LEDS[] = "leds";
+
   constexpr static char CMD_GET_VERSION[] = "get_version";
+  constexpr static char CMD_GET_CALIBRATION_NAME[] = "get_calibration_name";
   constexpr static char CMD_DELETE_CALIBRATION[] = "delete_calibration";
   constexpr static char CMD_SAVE_CALIBRATION[] = "save_calibration";
+  constexpr static char CMD_SET_BRIGHTNESS[] = "set_brightness";
+  constexpr static char CMD_GET_BRIGHTNESS[] = "get_brightness";
   constexpr static char CMD_PLAY[] = "play_show";
   constexpr static char CMD_STOP[] = "stop_show";
 
@@ -36,20 +42,25 @@ class Controller {
 
   void initialize();
   void dataReceivedCallback(const uint8_t data[], size_t length);
-
   void run();
+
+ private:
+  Controller() = default;
+
   void processReceivedData();
 
   void handleGetVersion();
+  void handleGetCalibrationName();
   void handleDeleteCalibration();
   void handleSaveCalibration();
+  void handleSetBrightness();
+  void handleGetBrightness();
+
   void handlePlayShow();
   void handleStopShow();
 
   void sendStatusResponse(int status, const char info[], ...);
-
- private:
-  Controller() = default;
+  bool setLedObj(LedObj& obj, uint8_t pcb_idx, uint8_t led_idx, uint8_t brightness);
 
   uint8_t rx_buffer_[RxBufferSize];
   uint8_t tx_buffer_[TxBufferSize];

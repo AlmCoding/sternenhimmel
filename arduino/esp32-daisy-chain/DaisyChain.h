@@ -20,12 +20,14 @@ class DaisyChain {
   void get_active_leds(LedObj leds[], size_t size) const;
   void set_active_leds(LedObj leds[], size_t size);
   void get_idle_leds(LedObj leds[], size_t size) const;
+  void set_idle_leds(LedObj leds[], size_t size);
   void load_default_values();
   void apply_idle_values();
   void flush_all();
   void flush_chain(ChainIdx idx, bool force = false);
   bool save_calibrated_values(const char calibration_name[]);
   bool delete_calibration_data();
+  const char* get_calibration_name() const;
 
  private:
   constexpr static uint8_t CalibrationFormatVersion = 0;
