@@ -105,7 +105,7 @@ class DaisyChain:
 
             self.leds.append(Led(pcb_index=pcb_idx, led_index=led_idx, brightness=brightness))
             print(
-                f"Loaded LED({pcb_idx},{led_idx}): group='{group}' correction={correction} => brightness={brightness}"
+                f"\tLED({pcb_idx:02d},{led_idx:02d}): group='{group:3s}' correction={correction:02d} => brightness={brightness:03d}"
             )
 
         self._check_leds()  # Validate total number of LEDs and their indices

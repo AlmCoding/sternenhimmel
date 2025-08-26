@@ -1,6 +1,5 @@
 import tkinter as tk
 from tkinter import filedialog, messagebox, scrolledtext
-import sys
 import datetime
 import asyncio
 import threading
@@ -10,6 +9,7 @@ import sys
 import io
 
 
+FIRMWARE_VERSION = "V0.0.1"
 CONFIG_TOOL = ConfigTool()
 
 
@@ -113,8 +113,9 @@ class AsyncLoopThread:
 
 class ConfigApp:
     def __init__(self, root):
+        global FIRMWARE_VERSION
         self.root = root
-        self.root.title("Config Tool")
+        self.root.title(f"Config Tool - {FIRMWARE_VERSION}")
         self.root.geometry("700x500")
         self.root.minsize(600, 300)
 
@@ -199,7 +200,7 @@ class ConfigApp:
     # --- GUI Actions ---
     def browse_file(self):
         filename = filedialog.askopenfilename(
-            title="Select Config File", filetypes=[("Config files", "*.json *.cfg *.txt"), ("All files", "*.*")]
+            title="Select Config File", filetypes=[("Config file", "*.json")]
         )
         if filename:
             self.file_path_var.set(filename)

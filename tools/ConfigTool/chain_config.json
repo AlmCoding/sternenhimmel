@@ -19,7 +19,7 @@
   "leds": [
     {"pcb_idx":  1, "led_idx":  1, "group": "M1", "correction": 0},
     {"pcb_idx":  1, "led_idx":  2, "group": "M2", "correction": 0},
-    {"pcb_idx":  1, "led_idx":  3, "group": "", "correction": 0},
+    {"pcb_idx":  1, "led_idx":  3, "group": "M3", "correction": 0},
     {"pcb_idx":  1, "led_idx":  4, "group": "", "correction": 0},
     {"pcb_idx":  1, "led_idx":  5, "group": "", "correction": 0},
     {"pcb_idx":  1, "led_idx":  6, "group": "", "correction": 0},
@@ -28,7 +28,7 @@
     {"pcb_idx":  1, "led_idx":  9, "group": "", "correction": 0},
     {"pcb_idx":  1, "led_idx": 10, "group": "", "correction": 0},
     {"pcb_idx":  1, "led_idx": 11, "group": "", "correction": 0},
-    {"pcb_idx":  1, "led_idx": 12, "group": "M5", "correction": 0},
+    {"pcb_idx":  1, "led_idx": 12, "group": "", "correction": 0},
 
     {"pcb_idx":  2, "led_idx":  1, "group": "", "correction": 0},
     {"pcb_idx":  2, "led_idx":  2, "group": "", "correction": 0},

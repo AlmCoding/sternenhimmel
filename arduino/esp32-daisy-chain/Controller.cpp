@@ -128,7 +128,7 @@ void Controller::processReceivedData() {
 void Controller::handleGetVersion() {
   DEBUG_INFO("CMD: '%s' [...]", CMD_GET_VERSION);
 
-  sendStatusResponse(0, KEY_VERSION, "v%d.%d.%d", FIRMWARE_VERSION_MAJOR, FIRMWARE_VERSION_MINOR,
+  sendStatusResponse(0, KEY_VERSION, "V%d.%d.%d", FIRMWARE_VERSION_MAJOR, FIRMWARE_VERSION_MINOR,
                      FIRMWARE_VERSION_PATCH);
   DEBUG_INFO("CMD: '%s' [OK]", CMD_GET_VERSION);
 }

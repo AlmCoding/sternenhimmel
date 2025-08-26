@@ -1,4 +1,3 @@
-import json
 import asyncio
 import CmdBuilder as cb
 import DaisyChain as dc
@@ -12,6 +11,7 @@ class ConfigTool:
         self.rid_counter = 0
         self.uploaded = False
         self.verified = False
+        self.uploaded_leds = []
 
     async def load(self, config_file_path: str) -> bool:
         self.chain = dc.DaisyChain()
@@ -34,12 +34,42 @@ class ConfigTool:
             self.client = None
         return success
 
+    def _get_changed_leds(self) -> list[dc.Led]:
+        if not self.chain:
+            raise RuntimeError("ConfigTool not properly initialized. Call 'load' first!")
+
+        leds = self.chain.get_leds()  # config file LEDs
+        uploaded_leds = self.uploaded_leds  # previously uploaded LEDs
+        changed_leds = []
+
+        if len(uploaded_leds) != len(leds):
+            assert len(uploaded_leds) == 0
+            return leds  # First time upload, return all LEDs
+
+        for idx, led in enumerate(leds):
+            uploaded_led = uploaded_leds[idx]
+            assert led.pcb_index == uploaded_led.pcb_index and led.led_index == uploaded_led.led_index
+
+            if led.brightness != uploaded_led.brightness:
+                print(
+                    f"\tLED({led.pcb_index:02d},{led.led_index:02d}) change detected: {uploaded_led.brightness:03d} -> {led.brightness:03d}"
+                )
+                changed_leds.append(led)
+
+        return changed_leds
+
     async def upload(self) -> bool:
         if not self.chain or not self.client:
             raise RuntimeError("ConfigTool not properly initialized. Call 'load' and 'connect' first!")
 
-        print(f"Starting upload of {len(self.chain.leds)} LEDs ...")
-        leds = self.chain.get_leds()
+        leds = self._get_changed_leds()
+        if len(leds) == 0:
+            print("No LED changes detected, skipping upload.")
+            self.uploaded = True
+            self.verified = False
+            return True
+
+        print(f"Starting upload of {len(leds)} LEDs ...")
         chunk_size = dc.LED_TOTAL // 12
         leds_list = [leds[i : i + chunk_size] for i in range(0, len(leds), chunk_size)]
 
@@ -48,9 +78,11 @@ class ConfigTool:
             success = await self._upload_leds(leds)
             if not success:
                 print("Failed to upload LED chunk!")
+                self.uploaded_leds = []
                 return False
 
         print("All LEDs uploaded successfully.")
+        self.uploaded_leds = self.chain.get_leds()
         self.uploaded = True
         self.verified = False
         return True
