@@ -10,15 +10,12 @@ class Controller {
   constexpr static size_t TxBufferSize = 1024 * 10;  // Size of the TX buffer
 
   constexpr static char KEY_RID[] = "rid";
-
-  // For status response
-  constexpr static char KEY_MSG[] = "msg";
-  constexpr static char KEY_STS[] = "sts";
-
-  // For received commands
   constexpr static char KEY_CMD[] = "cmd";
   constexpr static char KEY_NAME[] = "name";
   constexpr static char KEY_LEDS[] = "leds";
+  constexpr static char KEY_MSG[] = "msg";
+  constexpr static char KEY_STATUS[] = "status";
+  constexpr static char KEY_VERSION[] = "version";
 
   constexpr static char CMD_GET_VERSION[] = "get_version";
   constexpr static char CMD_GET_CALIBRATION_NAME[] = "get_calibration_name";
@@ -59,7 +56,7 @@ class Controller {
   void handlePlayShow();
   void handleStopShow();
 
-  void sendStatusResponse(int status, const char info[], ...);
+  void sendStatusResponse(int status, const char key[], const char value[], ...);
   bool setLedObj(LedObj& obj, uint8_t pcb_idx, uint8_t led_idx, uint8_t brightness);
 
   uint8_t rx_buffer_[RxBufferSize];

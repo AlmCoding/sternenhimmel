@@ -33,10 +33,11 @@ class TestCmdBuilder:
 
         # Send command and evaluate response
         response = await ble_client.send_command(cmd, timeout=1.0)
+
         doc = json.loads(response.decode("utf-8").rstrip("\0"))
         assert "rid" in doc and doc["rid"] == -1
         assert "msg" in doc and doc["msg"] == "Deserialize JSON string failed (IncompleteInput)"
-        assert "sts" in doc and doc["sts"] == -1
+        assert "status" in doc and doc["status"] == -1
 
     @pytest.mark.asyncio
     async def test_unknown_command(self, ble_client):
@@ -48,75 +49,63 @@ class TestCmdBuilder:
         doc = json.loads(response.decode("utf-8").rstrip("\0"))
         assert "rid" in doc and doc["rid"] == 0
         assert "msg" in doc and doc["msg"] == "Unknown 'cmd': 'unknown_command'"
-        assert "sts" in doc and doc["sts"] == -1
+        assert "status" in doc and doc["status"] == -1
 
     @pytest.mark.asyncio
     async def test_get_version(self, ble_client):
-        cmd = cb.CmdBuilder.get_version(rid=42)
-        assert cmd == bytearray(b'{"rid":42,"cmd":"get_version"}\0')
+        cmd = cb.CmdBuilder.get_version(rid=1)
+        assert cmd == bytearray(b'{"rid":1,"cmd":"get_version"}\0')
 
         # Send command and evaluate response
         response = await ble_client.send_command(cmd, timeout=1.0)
-        doc = json.loads(response.decode("utf-8").rstrip("\0"))
-        assert "rid" in doc and doc["rid"] == 42
-        assert "msg" in doc and doc["msg"] == "v0.0.1"
-        assert "sts" in doc and doc["sts"] == 0
+        assert cb.CmdBuilder.evaluate_get_version_response(response, rid=1) == "v0.0.1"
 
     @pytest.mark.asyncio
     async def test_get_calibration_name(self, ble_client):
-        cmd = cb.CmdBuilder.get_calibration_name(rid=8)
-        assert cmd == bytearray(b'{"rid":8,"cmd":"get_calibration_name"}\0')
+        cmd = cb.CmdBuilder.get_calibration_name(rid=2)
+        assert cmd == bytearray(b'{"rid":2,"cmd":"get_calibration_name"}\0')
 
         # Send command and evaluate response
         response = await ble_client.send_command(cmd, timeout=1.0)
-        doc = json.loads(response.decode("utf-8").rstrip("\0"))
-        assert "rid" in doc and doc["rid"] == 8
-        assert "msg" in doc and isinstance(doc["msg"], str)
-        assert "sts" in doc and doc["sts"] == 0
+        name = cb.CmdBuilder.evaluate_get_calibration_name_response(response, rid=2)
+        assert isinstance(name, str) and len(name) > 0
 
     @pytest.mark.asyncio
     async def test_delete_calibration(self, ble_client):
-        cmd = cb.CmdBuilder.delete_calibration(rid=7)
-        assert cmd == bytearray(b'{"rid":7,"cmd":"delete_calibration"}\0')
+        cmd = cb.CmdBuilder.delete_calibration(rid=3)
+        assert cmd == bytearray(b'{"rid":3,"cmd":"delete_calibration"}\0')
 
         # Send command and evaluate response
         response = await ble_client.send_command(cmd, timeout=1.0)
-        doc = json.loads(response.decode("utf-8").rstrip("\0"))
-        assert "rid" in doc and doc["rid"] == 7
-        assert "sts" in doc and doc["sts"] == 0
+        assert cb.CmdBuilder.evaluate_delete_calibration_response(response, rid=3) == True
 
     @pytest.mark.asyncio
     async def test_save_calibration(self, ble_client):
-        cmd = cb.CmdBuilder.save_calibration(rid=3, name="test_name_42")
-        assert cmd == bytearray(b'{"rid":3,"cmd":"save_calibration","name":"test_name_42"}\0')
+        cmd = cb.CmdBuilder.save_calibration(rid=4, name="test_42_name_69")
+        assert cmd == bytearray(b'{"rid":4,"cmd":"save_calibration","name":"test_42_name_69"}\0')
 
         # Send command and evaluate response
         response = await ble_client.send_command(cmd, timeout=1.0)
-        doc = json.loads(response.decode("utf-8").rstrip("\0"))
-        assert "rid" in doc and doc["rid"] == 3
-        assert "sts" in doc and doc["sts"] == 0
+        assert cb.CmdBuilder.evaluate_save_calibration_response(response, rid=4) == True
 
     @pytest.mark.asyncio
     async def test_set_brightness(self, ble_client):
         leds = [dc.Led(pcb_index=1, led_index=2, brightness=42), dc.Led(pcb_index=2, led_index=3, brightness=69)]
-        cmd = cb.CmdBuilder.set_brightness(rid=1, leds=leds)
-        assert cmd == bytearray(b'{"rid":1,"cmd":"set_brightness","leds":[[1,2,42],[2,3,69]]}\0')
+        cmd = cb.CmdBuilder.set_brightness(rid=5, leds=leds)
+        assert cmd == bytearray(b'{"rid":5,"cmd":"set_brightness","leds":[[1,2,42],[2,3,69]]}\0')
 
         # Send command and evaluate response
         response = await ble_client.send_command(cmd, timeout=1.0)
-        doc = json.loads(response.decode("utf-8").rstrip("\0"))
-        assert "rid" in doc and doc["rid"] == 1
-        assert "sts" in doc and doc["sts"] == 0
+        assert cb.CmdBuilder.evaluate_set_brightness_response(response, rid=5) == True
 
     @pytest.mark.asyncio
     async def test_get_brightness(self, ble_client):
         leds = [dc.Led(pcb_index=1, led_index=2, brightness=0), dc.Led(pcb_index=2, led_index=3, brightness=0)]
-        cmd = cb.CmdBuilder.get_brightness(rid=5, leds=leds)
-        assert cmd == bytearray(b'{"rid":5,"cmd":"get_brightness","leds":[[1,2],[2,3]]}\0')
+        cmd = cb.CmdBuilder.get_brightness(rid=6, leds=leds)
+        assert cmd == bytearray(b'{"rid":6,"cmd":"get_brightness","leds":[[1,2],[2,3]]}\0')
 
+        # Send command and evaluate response
         response = await ble_client.send_command(cmd, timeout=1.0)
-        doc = json.loads(response.decode("utf-8").rstrip("\0"))
-        assert "rid" in doc and doc["rid"] == 5
-        assert "sts" in doc and doc["sts"] == 0
-        assert "leds" in doc and isinstance(doc["leds"], list)
-        assert len(doc["leds"]) == 2
+        downloaded_leds = cb.CmdBuilder.evaluate_get_brightness_response(response, rid=6)
+        assert isinstance(downloaded_leds, list) and len(downloaded_leds) == 2
+        assert all(isinstance(led, dc.Led) for led in downloaded_leds)

@@ -11,27 +11,34 @@ class ConfigTool:
         self.client = None
         self.rid_counter = 0
         self.uploaded = False
+        self.verified = False
 
-    def load(self, config_file_path: str):
+    async def load(self, config_file_path: str) -> bool:
         self.chain = dc.DaisyChain()
         self.chain.load_config(config_file_path)
 
-    async def connect(self):
-        if not self.chain:
-            raise RuntimeError("DaisyChain configuration not loaded. Call 'load' first!")
+        self.uploaded = False
+        self.verified = False
+        return True
+
+    async def connect(self) -> bool:
         if not self.client:
             self.client = bc.BleClient()
-            await self.client.connect()
+        success = await self.client.connect()
+        return success
 
-    async def disconnect(self):
+    async def disconnect(self) -> bool:
+        success = True
         if self.client:
-            await self.client.disconnect()
+            success = await self.client.disconnect()
             self.client = None
+        return success
 
     async def upload(self) -> bool:
         if not self.chain or not self.client:
             raise RuntimeError("ConfigTool not properly initialized. Call 'load' and 'connect' first!")
 
+        print(f"Starting upload of {len(self.chain.leds)} LEDs ...")
         leds = self.chain.get_leds()
         chunk_size = dc.LED_TOTAL // 12
         leds_list = [leds[i : i + chunk_size] for i in range(0, len(leds), chunk_size)]
@@ -45,21 +52,70 @@ class ConfigTool:
 
         print("All LEDs uploaded successfully.")
         self.uploaded = True
+        self.verified = False
         return True
 
     async def _upload_leds(self, leds: list[dc.Led]) -> bool:
         self.rid_counter += 1
         cmd = cb.CmdBuilder.set_brightness(rid=self.rid_counter, leds=leds)
-        response = await self.client.send_command(cmd, timeout=3.0)
+        response = await self.client.send_command(cmd, timeout=5.0)
+        status = cb.CmdBuilder.evaluate_set_brightness_response(response, rid=self.rid_counter)
+        return status
 
-        doc = json.loads(response.decode("utf-8").rstrip("\0"))
-        print("Response:", doc)
-        if "rid" not in doc or doc["rid"] != self.rid_counter or "sts" not in doc or doc["sts"] != 0:
-            print("Error:", doc)
+    async def verify(self) -> bool:
+        if not self.chain or not self.client or not self.uploaded:
+            raise RuntimeError(
+                "ConfigTool not properly initialized or LEDs not uploaded. Call 'load', 'connect' and 'upload' first!"
+            )
+
+        print("Verifying uploaded LEDs ...")
+        leds = await self.download()
+        if not leds:
+            print("Failed to download LEDs for verification!")
             return False
+
+        for idx, led in enumerate(leds):
+            expected_led = self.chain.leds[idx]
+            if (
+                led.pcb_index != expected_led.pcb_index
+                or led.led_index != expected_led.led_index
+                or led.brightness != expected_led.brightness
+            ):
+                print(f"Error: LED data mismatch for LED ({idx}): expected {expected_led}, got {led}")
+                return False
+        print("All LEDs verified successfully.")
+        self.verified = True
         return True
 
-    async def save(self):
+    async def download(self) -> list[dc.Led] | None:
+        if not self.chain or not self.client:
+            raise RuntimeError("ConfigTool not properly initialized. Call 'load', 'connect' and 'upload' first!")
+
+        print(f"Starting download of {dc.LED_TOTAL} LEDs ...")
+        downloaded_leds = []
+        leds = self.chain.get_leds()
+        chunk_size = dc.LED_TOTAL // 12
+        leds_list = [leds[i : i + chunk_size] for i in range(0, len(leds), chunk_size)]
+
+        for i, leds in enumerate(leds_list):
+            print(f"Downloading chunk {i+1}/{len(leds_list)} with {len(leds)} LEDs ...")
+            downloaded = await self._download_leds(leds)
+            if not downloaded:
+                print("Failed to download LED chunk!")
+                return None
+            downloaded_leds += leds
+
+        print("All LEDs downloaded successfully.")
+        return downloaded_leds
+
+    async def _download_leds(self, leds: list[dc.Led]) -> list[dc.Led] | None:
+        self.rid_counter += 1
+        cmd = cb.CmdBuilder.get_brightness(rid=self.rid_counter, leds=leds)
+        response = await self.client.send_command(cmd, timeout=5.0)
+        downloaded_leds = cb.CmdBuilder.evaluate_get_brightness_response(response, rid=self.rid_counter)
+        return downloaded_leds
+
+    async def save(self) -> bool:
         if not self.chain or not self.client or not self.uploaded:
             raise RuntimeError(
                 "ConfigTool not properly initialized or LEDs not uploaded. Call 'load', 'connect' and 'upload' first!"
@@ -69,23 +125,22 @@ class ConfigTool:
         cmd = cb.CmdBuilder.save_calibration(rid=self.rid_counter, name=self.chain.name)
         response = await self.client.send_command(cmd, timeout=3.0)
 
-        doc = json.loads(response.decode("utf-8").rstrip("\0"))
-        print("Response:", doc)
-        if "rid" not in doc or doc["rid"] != self.rid_counter or "sts" not in doc or doc["sts"] != 0:
-            print("Error:", doc)
+        status = cb.CmdBuilder.evaluate_save_calibration_response(response, rid=self.rid_counter)
+        if not status:
+            print("Failed to save calibration on device!")
             return False
-
-        print(f"Configuration '{self.chain.name}' successfully saved.")
+        print("Calibration saved successfully on device.")
         return True
 
 
 async def main():
     config_tool = ConfigTool()
-    config_tool.load("chain_config.json")
+    await config_tool.load("chain_config.json")
     await config_tool.connect()
 
     if await config_tool.upload():
-        await config_tool.save()
+        if await config_tool.verify():
+            await config_tool.save()
 
     await config_tool.disconnect()
 

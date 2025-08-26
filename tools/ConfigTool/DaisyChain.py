@@ -70,6 +70,7 @@ class DaisyChain:
         self.ConfigLedKeys = ("pcb_idx", "led_idx", "group", "correction")
 
     def load_config(self, file_path: str):
+        print(f"Loading config file: '{file_path}'")
         with open(file_path, "r", encoding="utf-8") as f:
             data = json.load(f)
 
@@ -108,7 +109,7 @@ class DaisyChain:
             )
 
         self._check_leds()  # Validate total number of LEDs and their indices
-        print(f"Successfully loaded config '{self.name}' with {len(self.leds)} LEDs.")
+        print(f"Successfully loaded config ('{self.name}') with {len(self.leds)} LEDs.")
 
     def _check_leds(self):
         for idx, led in enumerate(self.leds):

@@ -86,20 +86,20 @@ void Controller::processReceivedData() {
   // Parse JSON from the RX buffer
   DeserializationError error = deserializeJson(rx_json_doc_, rx_buffer_, rx_index_);
   if (error != DeserializationError::Ok) {
-    sendStatusResponse(-1, "Deserialize JSON string failed (%s)", error.c_str());
+    sendStatusResponse(-1, KEY_MSG, "Deserialize JSON string failed (%s)", error.c_str());
     return;
   }
 
   // Parse request id
   if (rx_json_doc_.containsKey(KEY_RID) == false) {
-    sendStatusResponse(-1, STATUS_MSG_MISSING_KEY, KEY_RID);
+    sendStatusResponse(-1, KEY_MSG, STATUS_MSG_MISSING_KEY, KEY_RID);
     return;
   }
   current_rid_ = rx_json_doc_[KEY_RID];
 
   // Parse the command from the JSON document
   if (rx_json_doc_.containsKey(KEY_CMD) == false) {
-    sendStatusResponse(-1, STATUS_MSG_MISSING_KEY, KEY_CMD);
+    sendStatusResponse(-1, KEY_MSG, STATUS_MSG_MISSING_KEY, KEY_CMD);
     return;
   }
   const char* cmd = rx_json_doc_[KEY_CMD];
@@ -121,14 +121,15 @@ void Controller::processReceivedData() {
   } else if (strcmp(cmd, CMD_STOP) == 0) {
     handleStopShow();
   } else {
-    sendStatusResponse(-1, "Unknown '%s': '%s'", KEY_CMD, cmd);
+    sendStatusResponse(-1, KEY_MSG, "Unknown '%s': '%s'", KEY_CMD, cmd);
   }
 }
 
 void Controller::handleGetVersion() {
   DEBUG_INFO("CMD: '%s' [...]", CMD_GET_VERSION);
 
-  sendStatusResponse(0, "v%d.%d.%d", FIRMWARE_VERSION_MAJOR, FIRMWARE_VERSION_MINOR, FIRMWARE_VERSION_PATCH);
+  sendStatusResponse(0, KEY_VERSION, "v%d.%d.%d", FIRMWARE_VERSION_MAJOR, FIRMWARE_VERSION_MINOR,
+                     FIRMWARE_VERSION_PATCH);
   DEBUG_INFO("CMD: '%s' [OK]", CMD_GET_VERSION);
 }
 
@@ -138,7 +139,7 @@ void Controller::handleGetCalibrationName() {
   const char* name = DaisyChain::getInstance().get_calibration_name();
   ASSERT(name != nullptr);
 
-  sendStatusResponse(0, "%s", name);
+  sendStatusResponse(0, KEY_NAME, "%s", name);
   DEBUG_INFO("CMD: '%s' [OK]", CMD_GET_VERSION);
 }
 
@@ -149,7 +150,7 @@ void Controller::handleDeleteCalibration() {
   DaisyChain::getInstance().load_default_values();
   DaisyChain::getInstance().apply_idle_values();
 
-  sendStatusResponse(0, "OK");
+  sendStatusResponse(0, "", "");
   DEBUG_INFO("CMD: '%s' [OK]", CMD_DELETE_CALIBRATION);
 }
 
@@ -157,14 +158,14 @@ void Controller::handleSaveCalibration() {
   DEBUG_INFO("CMD: '%s' [...]", CMD_SAVE_CALIBRATION);
 
   if (rx_json_doc_.containsKey(KEY_NAME) == false) {
-    sendStatusResponse(-1, STATUS_MSG_MISSING_KEY, KEY_NAME);
+    sendStatusResponse(-1, KEY_MSG, STATUS_MSG_MISSING_KEY, KEY_NAME);
     return;
   }
 
   const char* name = rx_json_doc_[KEY_NAME];
   DaisyChain::getInstance().save_calibrated_values(name);
 
-  sendStatusResponse(0, "OK");
+  sendStatusResponse(0, "", "");
   DEBUG_INFO("CMD: '%s' [OK]", CMD_SAVE_CALIBRATION);
 }
 
@@ -172,7 +173,7 @@ void Controller::handleSetBrightness() {
   DEBUG_INFO("CMD: '%s' [...]", CMD_SET_BRIGHTNESS);
 
   if (rx_json_doc_.containsKey(KEY_LEDS) == false) {
-    sendStatusResponse(-1, STATUS_MSG_MISSING_KEY, KEY_LEDS);
+    sendStatusResponse(-1, KEY_MSG, STATUS_MSG_MISSING_KEY, KEY_LEDS);
     return;
   }
 
@@ -187,14 +188,14 @@ void Controller::handleSetBrightness() {
     DEBUG_INFO("  LED(%d, %d): brightness=%d", pcb_idx, led_idx, brightness);
 
     if (setLedObj(obj, pcb_idx, led_idx, brightness) == false) {
-      sendStatusResponse(-1, "Invalid LED object: [%d, %d, %d]", pcb_idx, led_idx, brightness);
+      sendStatusResponse(-1, KEY_MSG, "Invalid LED object: [%d, %d, %d]", pcb_idx, led_idx, brightness);
       return;
     }
     DaisyChain::getInstance().set_idle_leds(&obj, 1);
   }
   DaisyChain::getInstance().apply_idle_values();
 
-  sendStatusResponse(0, "OK");
+  sendStatusResponse(0, "", "");
   DEBUG_INFO("CMD: '%s' [OK]", CMD_SET_BRIGHTNESS);
 }
 
@@ -202,7 +203,7 @@ void Controller::handleGetBrightness() {
   DEBUG_INFO("CMD: '%s' [...]", CMD_GET_BRIGHTNESS);
 
   if (rx_json_doc_.containsKey(KEY_LEDS) == false) {
-    sendStatusResponse(-1, STATUS_MSG_MISSING_KEY, KEY_LEDS);
+    sendStatusResponse(-1, KEY_MSG, STATUS_MSG_MISSING_KEY, KEY_LEDS);
     return;
   }
 
@@ -217,7 +218,7 @@ void Controller::handleGetBrightness() {
     DEBUG_INFO("  LED(%d, %d)", pcb_idx, led_idx);
 
     if (setLedObj(obj, pcb_idx, led_idx, 0) == false) {
-      sendStatusResponse(-1, "Invalid LED object: [%d, %d]", pcb_idx, led_idx);
+      sendStatusResponse(-1, KEY_MSG, "Invalid LED object: [%d, %d]", pcb_idx, led_idx);
       return;
     }
     DaisyChain::getInstance().get_idle_leds(&obj, 1);
@@ -229,7 +230,7 @@ void Controller::handleGetBrightness() {
 
   tx_json_doc_[KEY_RID] = current_rid_;
   tx_json_doc_[KEY_MSG] = "OK";
-  tx_json_doc_[KEY_STS] = 0;
+  tx_json_doc_[KEY_STATUS] = 0;
 
   size_t len = serializeJson(tx_json_doc_, tx_buffer_, TxBufferSize);
   if (len == 0 || len >= TxBufferSize) {
@@ -250,7 +251,7 @@ void Controller::handleGetBrightness() {
 void Controller::handlePlayShow() {
   DEBUG_INFO("CMD: '%s' [...]", CMD_PLAY);
 
-  sendStatusResponse(0, "OK");
+  sendStatusResponse(0, "", "");
   DEBUG_INFO("CMD: '%s' [OK]", CMD_PLAY);
 }
 
@@ -259,22 +260,26 @@ void Controller::handleStopShow() {
 
   Player::getInstance().abort();
 
-  sendStatusResponse(0, "OK");
+  sendStatusResponse(0, "", "");
   DEBUG_INFO("CMD: '%s' [OK]", CMD_STOP);
 }
 
-void Controller::sendStatusResponse(int status, const char info[], ...) {
+void Controller::sendStatusResponse(int status, const char key[], const char value[], ...) {
   char buffer[128];
+  ASSERT(key != nullptr);
+  ASSERT(value != nullptr);
 
   va_list args;
-  va_start(args, info);
-  vsnprintf(buffer, sizeof(buffer), info, args);
+  va_start(args, value);
+  vsnprintf(buffer, sizeof(buffer), value, args);
   va_end(args);
 
   tx_json_doc_.clear();
   tx_json_doc_[KEY_RID] = current_rid_;
-  tx_json_doc_[KEY_MSG] = buffer;
-  tx_json_doc_[KEY_STS] = status;
+  tx_json_doc_[KEY_STATUS] = status;
+  if (strlen(key) > 0) {
+    tx_json_doc_[key] = buffer;
+  }
 
   size_t len = serializeJson(tx_json_doc_, tx_buffer_, TxBufferSize);
   if (len == 0 || len >= TxBufferSize) {
@@ -288,7 +293,6 @@ void Controller::sendStatusResponse(int status, const char info[], ...) {
   if (BleManager::getInstance().writeData(tx_buffer_, len) == false) {
     DEBUG_ERROR("Failed to send response via BLE!");
   }
-  // BleManager::getInstance().writeData(reinterpret_cast<const uint8_t*>(tx_buffer_), len);
 }
 
 bool Controller::setLedObj(LedObj& obj, uint8_t pcb_idx, uint8_t led_idx, uint8_t brightness) {
