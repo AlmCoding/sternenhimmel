@@ -68,7 +68,7 @@ class BleClient:
             raise RuntimeError("Not connected to BLE device!")
 
         self.response_buffer.clear()
-        print(f"Sending: {command}")
+        print(f"Sending({len(command)} bytes): {command}")
 
         data_list = [command[i : i + NET_MTU] for i in range(0, len(command), NET_MTU)]
         for data in data_list:

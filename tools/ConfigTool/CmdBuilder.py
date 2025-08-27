@@ -156,24 +156,18 @@ class CmdBuilder:
         seq = []
         for group_idx, step in sequence:
             seq.append(
-                {
-                    "group": group_idx,
-                    "down": step.down_ms,
-                    "pause": step.pause_ms,
-                    "up": step.up_ms,
-                    "pulse": step.pulse_ms,
-                    "return": step.idle_return,
-                }
+                [group_idx, step.down_ms, step.pause_ms, step.up_ms, step.pulse_ms, step.reps, int(step.idle_return)]
             )
         return seq
 
     @staticmethod
-    def play_show(rid: int, show: dc.Show):
+    def play_show(rid: int, show: dc.Show, force: bool = False):
         groups = [CmdBuilder._unpack_leds(leds, index_only=True) for leds in show.get_groups()]
         sequence = CmdBuilder._unpack_sequence(show.get_sequence())
         doc = {
             "rid": rid,
             "cmd": "play_show",
+            "force": int(force),
             "groups": groups,
             "sequence": sequence,
         }

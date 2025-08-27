@@ -9,10 +9,17 @@ class Controller {
   constexpr static size_t RxBufferSize = 1024 * 10;  // Size of the RX buffer
   constexpr static size_t TxBufferSize = 1024 * 10;  // Size of the TX buffer
 
+  constexpr static size_t MaxLedObjects = 256;    // Maximum number of LED objects in a single command
+  constexpr static size_t MaxLedGroups = 16;      // Maximum number of LED groups in a single command
+  constexpr static size_t MaxSequenceSteps = 16;  // Maximum number of sequence steps in a single command
+
   constexpr static char KEY_RID[] = "rid";
   constexpr static char KEY_CMD[] = "cmd";
   constexpr static char KEY_NAME[] = "name";
   constexpr static char KEY_LEDS[] = "leds";
+  constexpr static char KEY_FORCE[] = "force";
+  constexpr static char KEY_GROUPS[] = "groups";
+  constexpr static char KEY_SEQUENCE[] = "sequence";
   constexpr static char KEY_MSG[] = "msg";
   constexpr static char KEY_STATUS[] = "status";
   constexpr static char KEY_VERSION[] = "version";
@@ -42,6 +49,10 @@ class Controller {
   void run();
 
  private:
+  struct GroupInfo {
+    LedObj* leds;
+    size_t size;
+  };
   Controller() = default;
 
   void processReceivedData();
@@ -58,6 +69,8 @@ class Controller {
 
   void sendStatusResponse(int status, const char key[], const char value[], ...);
   bool setLedObj(LedObj& obj, uint8_t pcb_idx, uint8_t led_idx, uint8_t brightness);
+  bool extractGroups();
+  bool extractSequence();
 
   uint8_t rx_buffer_[RxBufferSize];
   uint8_t tx_buffer_[TxBufferSize];
@@ -69,6 +82,13 @@ class Controller {
 
   StaticJsonDocument<2 * RxBufferSize> rx_json_doc_;
   StaticJsonDocument<2 * TxBufferSize> tx_json_doc_;
+
+  LedObj leds_[MaxLedObjects];  // All groups are in this array (the start of each group is pointed to by groups_[])
+  GroupInfo groups_[MaxLedGroups];
+  size_t group_count_ = 0;
+
+  SequenceStep sequence_[MaxSequenceSteps];
+  size_t sequence_length_ = 0;
 
   int32_t current_rid_ = -1;
 };
