@@ -31,7 +31,7 @@ class DaisyChain {
 
  private:
   constexpr static uint8_t CalibrationFormatVersion = 0;
-  constexpr static size_t CalibrationNameMaxLength = 32;
+  constexpr static size_t CalibrationNameMaxLength = 64;
   // HSPI pins
   constexpr static int SpiClockFreq = 8000000;  // 8 MHz
   constexpr static int SpiClockPin = 12;

@@ -49,6 +49,18 @@ async def async_connect():
     return status, buf.get_value()
 
 
+async def async_get_info():
+    global CONFIG_TOOL
+    status = False
+    with PrintBuffer() as buf:
+        try:
+            info = await CONFIG_TOOL.get_info()
+            status = info is not None
+        except Exception as e:
+            print(f"Error getting device info: {e}")
+    return status, buf.get_value()
+
+
 async def async_disconnect():
     global CONFIG_TOOL
     status = False
@@ -112,6 +124,14 @@ class AsyncLoopThread:
 
 
 class ConfigApp:
+    class State:
+        def __init__(self, connected=False, loaded=False, uploaded=False, verified=False, saved=False):
+            self.connected = connected
+            self.loaded = loaded
+            self.uploaded = uploaded
+            self.verified = verified
+            self.saved = saved
+
     def __init__(self, root):
         global FIRMWARE_VERSION
         self.root = root
@@ -135,21 +155,27 @@ class ConfigApp:
         self.file_entry = tk.Entry(root, textvariable=self.file_path_var)
         self.file_entry.grid(row=0, column=1, padx=5, pady=5, sticky="ew")
 
-        tk.Button(root, text="Browse", command=self.browse_file).grid(row=0, column=2, padx=5, pady=5, sticky="ew")
-        tk.Button(root, text="Load", command=self.load_file).grid(row=0, column=3, padx=5, pady=5, sticky="ew")
+        self.browse_btn = tk.Button(root, text="Browse", command=self.browse_file)
+        self.browse_btn.grid(row=0, column=2, padx=5, pady=5, sticky="ew")
+
+        self.load_btn = tk.Button(root, text="Load", command=self.load_file)
+        self.load_btn.grid(row=0, column=3, padx=5, pady=5, sticky="ew")
 
         # --- Action row ---
         self.connect_btn = tk.Button(root, text="Connect", width=12, command=self.toggle_connection)
         self.connect_btn.grid(row=1, column=0, padx=5, pady=10, sticky="w")
 
+        self.info_btn = tk.Button(root, text="Info", width=12, command=self.info, state="disabled")
+        self.info_btn.grid(row=1, column=1, padx=5, pady=10, sticky="w")
+
         self.upload_btn = tk.Button(root, text="Upload", width=12, command=self.upload, state="disabled")
-        self.upload_btn.grid(row=1, column=1, padx=5, pady=10, sticky="e")
+        self.upload_btn.grid(row=1, column=2, padx=5, pady=10, sticky="e")
 
         self.verify_btn = tk.Button(root, text="Verify", width=12, command=self.verify, state="disabled")
-        self.verify_btn.grid(row=1, column=2, padx=5, pady=10, sticky="e")
+        self.verify_btn.grid(row=1, column=3, padx=5, pady=10, sticky="e")
 
         self.save_btn = tk.Button(root, text="Save", width=12, command=self.save, state="disabled")
-        self.save_btn.grid(row=1, column=3, padx=5, pady=10, sticky="e")
+        self.save_btn.grid(row=2, column=3, padx=5, pady=10, sticky="e")
 
         # --- Log field ---
         tk.Label(root, text="Log:").grid(row=2, column=0, sticky="w", padx=5)
@@ -160,34 +186,39 @@ class ConfigApp:
         self.clear_btn = tk.Button(root, text="Clear", width=12, command=self.clear, state="normal")
         self.clear_btn.grid(row=4, column=3, padx=5, pady=10, sticky="e")
 
-        self.connected = False
-        self.file_loaded = False
-        self.file_uploaded = False
-        self.file_verified = False
+        self.state = self.State()
 
         # Periodically check result queue
         self.root.after(100, self.process_queue)
 
-    def update_buttons(self):
-        upload_state = "disabled"
-        verify_state = "disabled"
-        save_state = "disabled"
+    def update_buttons(self, action_ongoing: bool = False):
+        if action_ongoing:
+            # Disable all buttons during ongoing action
+            self.browse_btn.config(state="disabled")
+            self.load_btn.config(state="disabled")
 
-        if self.connected:
+            self.connect_btn.config(state="disabled")
+            self.info_btn.config(state="disabled")
+            self.upload_btn.config(state="disabled")
+            self.verify_btn.config(state="disabled")
+            self.save_btn.config(state="disabled")
+            return
+
+        self.browse_btn.config(state="normal")
+        self.load_btn.config(state="normal")
+
+        if self.state.connected:
             self.connect_btn.config(state="normal", text="Disconnect")
+            self.info_btn.config(state="normal")  # Always enabled when connected
 
-            if self.file_loaded:
-                upload_state = "normal"
-                if self.file_uploaded:
-                    verify_state = "normal"
-                    if self.file_verified:
-                        save_state = "normal"
+            if self.state.loaded:
+                self.upload_btn.config(state="normal")
+                self.verify_btn.config(state="normal")
+
+                if self.state.verified:
+                    self.save_btn.config(state="normal")
         else:
             self.connect_btn.config(state="normal", text="Connect")
-
-        self.upload_btn.config(state=upload_state)
-        self.verify_btn.config(state=verify_state)
-        self.save_btn.config(state=save_state)
 
     # --- Logging ---
     def log(self, message):
@@ -199,22 +230,21 @@ class ConfigApp:
 
     # --- GUI Actions ---
     def browse_file(self):
-        filename = filedialog.askopenfilename(
-            title="Select Config File", filetypes=[("Config file", "*.json")]
-        )
+        filename = filedialog.askopenfilename(title="Select Config File", filetypes=[("Config file", "*.json")])
         if filename:
             self.file_path_var.set(filename)
             self.log(f"Selected file: '{filename}'")
 
     def toggle_connection(self):
-        self.connect_btn.config(state="disabled")  # Block button until feedback arrives
-        if not self.connected:
+        if not self.state.connected:
             fut = self.loop.run_coro(async_connect())
             fut.add_done_callback(lambda f: self.result_queue.put(("connect", f.result())))
+            self.update_buttons(action_ongoing=True)
             self.log("Connecting ...")
         else:
             fut = self.loop.run_coro(async_disconnect())
             fut.add_done_callback(lambda f: self.result_queue.put(("disconnect", f.result())))
+            self.update_buttons(action_ongoing=True)
             self.log("Disconnecting ...")
 
     def load_file(self):
@@ -222,35 +252,33 @@ class ConfigApp:
         if not filepath:
             messagebox.showwarning("Warning", "Please select a file first.")
             return
-
-        self.file_loaded = False
-        self.file_uploaded = False
-        self.file_verified = False
-        self.update_buttons()
         fut = self.loop.run_coro(async_load(filepath))
         fut.add_done_callback(lambda f: self.result_queue.put(("load", f.result())))
+        self.update_buttons(action_ongoing=True)
+
+    def info(self):
+        fut = self.loop.run_coro(async_get_info())
+        fut.add_done_callback(lambda f: self.result_queue.put(("info", f.result())))
+        self.update_buttons(action_ongoing=True)
+        self.log("Getting device info ...")
 
     def upload(self):
-        self.file_loaded = False
-        self.file_uploaded = False
-        self.file_verified = False
-        self.update_buttons()
         fut = self.loop.run_coro(async_upload())
         fut.add_done_callback(lambda f: self.result_queue.put(("upload", f.result())))
+        self.update_buttons(action_ongoing=True)
         self.log("Upload started ...")
 
     def verify(self):
-        self.file_loaded = False
-        self.file_uploaded = False
-        self.file_verified = False
-        self.update_buttons()
         fut = self.loop.run_coro(async_verify())
         fut.add_done_callback(lambda f: self.result_queue.put(("verify", f.result())))
+        self.update_buttons(action_ongoing=True)
         self.log("Verification started ...")
 
     def save(self):
         fut = self.loop.run_coro(async_save())
         fut.add_done_callback(lambda f: self.result_queue.put(("save", f.result())))
+        self.update_buttons(action_ongoing=True)
+        self.log("Saving calibration ...")
 
     def clear(self):
         self.log_area.config(state="normal")
@@ -265,26 +293,25 @@ class ConfigApp:
                 tag, result = self.result_queue.get_nowait()
                 status, message = result if isinstance(result, tuple) else (False, result)
                 if tag == "connect":
-                    self.connected = status
-                    self.update_buttons()
+                    self.state.connected = status
                 elif tag == "disconnect":
-                    self.connected = False
-                    self.update_buttons()
-                elif tag == "load":
-                    self.file_loaded = status
-                    self.update_buttons()
-                elif tag == "upload":
-                    self.file_uploaded = status
-                    self.file_loaded = True
-                    self.update_buttons()
-                elif tag == "verify":
-                    self.file_verified = status
-                    self.file_uploaded = True
-                    self.file_loaded = True
-                    self.update_buttons()
-                elif tag == "save":
+                    self.state.connected = False
+                elif tag == "info":
                     pass  # No state change needed
+                elif tag == "load":
+                    self.state.loaded = status
+                    self.state.uploaded = False
+                    self.state.verified = False
+                elif tag == "upload":
+                    self.state.uploaded = status
+                elif tag == "verify":
+                    self.state.verified = status
+                elif tag == "save":
+                    self.state.saved = status
+                else:
+                    raise ValueError(f"Unhandled tag in result queue: {tag}")
 
+                self.update_buttons(action_ongoing=False)
                 self.log(message)
         except queue.Empty:
             pass

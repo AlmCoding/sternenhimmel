@@ -64,30 +64,45 @@ class Show:
 
 class DaisyChain:
     def __init__(self):
+        self.file_path = ""
         self.name = ""
         self.groups = {}
         self.leds = []
         self.ConfigLedKeys = ("pcb_idx", "led_idx", "group", "correction")
 
     def load_config(self, file_path: str):
-        print(f"Loading config file: '{file_path}'")
+        if file_path != self.file_path:
+            print(f"Loading config file: '{file_path}'")
+            self.file_path = file_path
+            self.leds = []  # Clear existing LEDs if loading a different file
+        else:
+            print(f"Reloading config file: '{file_path}'")
+
         with open(file_path, "r", encoding="utf-8") as f:
-            data = json.load(f)
+            doc = json.load(f)
 
-        if "name" not in data or not isinstance(data["name"], str):
+        if "name" not in doc or not isinstance(doc["name"], str):
             raise ValueError("Invalid config file: 'name' key missing or not a string")
-
-        if "groups" not in data or not isinstance(data["groups"], dict):
+        if "groups" not in doc or not isinstance(doc["groups"], dict):
             raise ValueError("Invalid config file: 'groups' key missing or not a dict")
-
-        if "leds" not in data or not isinstance(data["leds"], list):
+        if "leds" not in doc or not isinstance(doc["leds"], list):
             raise ValueError("Invalid config file: 'leds' key missing or not a list")
 
-        self.name = data["name"]
-        self.groups = data["groups"]
+        self.name = doc["name"]
+        self.groups = doc["groups"]
+        if len(self.groups) == 0:
+            raise ValueError("Invalid config file: 'groups' must contain at least one entry")
 
-        self.leds = []
-        for led_obj in data["leds"]:
+        changes_detected = self._load_leds(doc)
+        if not changes_detected:
+            print("No changes detected in LED configuration.")
+
+        self._check_leds()  # Validate total number of LEDs and their indices
+        print(f"Successfully (re)loaded config ('{self.name}') with {len(self.leds)} LEDs.")
+
+    def _load_leds(self, doc: dict):
+        changes_detected = False
+        for idx, led_obj in enumerate(doc["leds"]):
             for key in self.ConfigLedKeys:
                 if key not in list(led_obj.keys()):
                     raise ValueError(f"LED entry missing key: '{key}'")
@@ -103,13 +118,22 @@ class DaisyChain:
             if not (0 <= brightness <= MAX_BRIGHTNESS):
                 raise ValueError(f"LED brightness ({brightness}) out of range [0, {MAX_BRIGHTNESS}]")
 
-            self.leds.append(Led(pcb_index=pcb_idx, led_index=led_idx, brightness=brightness))
+            led = Led(pcb_index=pcb_idx, led_index=led_idx, brightness=brightness)
+            if len(self.leds) > idx:
+                # Entry already exists from previous load, check for changes
+                assert self.leds[idx].pcb_index == pcb_idx and self.leds[idx].led_index == led_idx
+                if self.leds[idx].brightness != brightness:
+                    changes_detected = True
+                    self.leds[idx].brightness = brightness
+                else:
+                    continue  # No change, don't print
+            else:
+                changes_detected = True
+                self.leds.append(led)
             print(
                 f"\tLED({pcb_idx:02d},{led_idx:02d}): group='{group:3s}' correction={correction:02d} => brightness={brightness:03d}"
             )
-
-        self._check_leds()  # Validate total number of LEDs and their indices
-        print(f"Successfully loaded config ('{self.name}') with {len(self.leds)} LEDs.")
+        return changes_detected
 
     def _check_leds(self):
         for idx, led in enumerate(self.leds):

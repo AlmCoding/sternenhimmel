@@ -2,11 +2,12 @@ import asyncio
 import CmdBuilder as cb
 import DaisyChain as dc
 import BleClient as bc
+import datetime
 
 
 class ConfigTool:
     def __init__(self):
-        self.chain = None
+        self.chain = dc.DaisyChain()
         self.client = None
         self.rid_counter = 0
         self.uploaded = False
@@ -14,9 +15,7 @@ class ConfigTool:
         self.uploaded_leds = []
 
     async def load(self, config_file_path: str) -> bool:
-        self.chain = dc.DaisyChain()
         self.chain.load_config(config_file_path)
-
         self.uploaded = False
         self.verified = False
         return True
@@ -33,6 +32,32 @@ class ConfigTool:
             success = await self.client.disconnect()
             self.client = None
         return success
+
+    async def get_info(self) -> tuple[str] | None:
+        if not self.client:
+            raise RuntimeError("ConfigTool not properly initialized. Call 'connect' first!")
+
+        self.rid_counter += 1
+        cmd = cb.CmdBuilder.get_version(rid=self.rid_counter)
+        response = await self.client.send_command(cmd, timeout=3.0)
+        version = cb.CmdBuilder.evaluate_get_version_response(response, rid=self.rid_counter)
+        if not version:
+            print("Failed to get device version!")
+            return None
+
+        self.rid_counter += 1
+        cmd = cb.CmdBuilder.get_calibration_name(rid=self.rid_counter)
+        response = await self.client.send_command(cmd, timeout=3.0)
+        name = cb.CmdBuilder.evaluate_get_calibration_name_response(response, rid=self.rid_counter)
+        if not name:
+            print("Failed to get device calibration name!")
+            return None
+
+        print("Device info:")
+        print(f"\tfirmware version: {version}")
+        print(f"\tcalibration name: {name}")
+
+        return version, name
 
     def _get_changed_leds(self) -> list[dc.Led]:
         if not self.chain:
@@ -66,7 +91,6 @@ class ConfigTool:
         if len(leds) == 0:
             print("No LED changes detected, skipping upload.")
             self.uploaded = True
-            self.verified = False
             return True
 
         print(f"Starting upload of {len(leds)} LEDs ...")
@@ -84,7 +108,6 @@ class ConfigTool:
         print("All LEDs uploaded successfully.")
         self.uploaded_leds = self.chain.get_leds()
         self.uploaded = True
-        self.verified = False
         return True
 
     async def _upload_leds(self, leds: list[dc.Led]) -> bool:
@@ -95,16 +118,17 @@ class ConfigTool:
         return status
 
     async def verify(self) -> bool:
-        if not self.chain or not self.client or not self.uploaded:
-            raise RuntimeError(
-                "ConfigTool not properly initialized or LEDs not uploaded. Call 'load', 'connect' and 'upload' first!"
-            )
+        if not self.chain or not self.client:
+            raise RuntimeError("ConfigTool not properly initialized. Call 'load' and 'connect' first!")
 
         print("Verifying uploaded LEDs ...")
         leds = await self.download()
         if not leds:
             print("Failed to download LEDs for verification!")
             return False
+
+        # Set uploaded_leds to the downloaded ones for future change detection
+        self.uploaded_leds = leds
 
         for idx, led in enumerate(leds):
             expected_led = self.chain.leds[idx]
@@ -148,13 +172,15 @@ class ConfigTool:
         return downloaded_leds
 
     async def save(self) -> bool:
-        if not self.chain or not self.client or not self.uploaded:
+        if not self.chain or not self.client or not self.verified:
             raise RuntimeError(
-                "ConfigTool not properly initialized or LEDs not uploaded. Call 'load', 'connect' and 'upload' first!"
+                "ConfigTool not properly initialized. Call 'load', 'connect', 'upload' and 'verify' first!"
             )
+        name = f"{self.chain.name} {datetime.datetime.now():%Y/%m/%d %H:%M}"
+        print(f"Saving calibration on device with name: '{name}' ...")
 
         self.rid_counter += 1
-        cmd = cb.CmdBuilder.save_calibration(rid=self.rid_counter, name=self.chain.name)
+        cmd = cb.CmdBuilder.save_calibration(rid=self.rid_counter, name=name)
         response = await self.client.send_command(cmd, timeout=3.0)
 
         status = cb.CmdBuilder.evaluate_save_calibration_response(response, rid=self.rid_counter)
@@ -170,9 +196,12 @@ async def main():
     await config_tool.load("chain_config.json")
     await config_tool.connect()
 
+    await config_tool.get_info()
+
     if await config_tool.upload():
         if await config_tool.verify():
             await config_tool.save()
+            await config_tool.get_info()
 
     await config_tool.disconnect()
 
