@@ -12,3 +12,7 @@ tools/ConfigTool/tests/__pycache__/
 arduino/esp32-daisy-chain/build/
 
 arduino/esp32-daisy-chain/.$info.drawio.bkp
+
+tools/ConfigTool/build/
+
+tools/ConfigTool/ConfigToolApp.spec
