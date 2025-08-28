@@ -11,7 +11,7 @@ class BleManager {
   constexpr static char CHARACTERISTIC_UUID_RX[] = "6E400002-B5A3-F393-E0A9-E50E24DCCA9E";  // RX characteristic
   constexpr static char CHARACTERISTIC_UUID_TX[] = "6E400003-B5A3-F393-E0A9-E50E24DCCA9E";  // TX characteristic
 
-  constexpr static uint32_t TxTimeout = 1000;     // Timeout for TX in milliseconds
+  constexpr static uint32_t TxTimeout = 1500;     // Timeout for TX in milliseconds
   constexpr static size_t AttPacketOverhead = 3;  // ATT packet overhead for notifications/indications
   constexpr static size_t MaxTxDataLength = 23 - AttPacketOverhead;  // Minimum TX data length (default MTU 23)
 

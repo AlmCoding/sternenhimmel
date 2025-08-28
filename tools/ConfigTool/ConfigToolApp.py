@@ -8,7 +8,7 @@ import wrapper as aw
 from helper import AsyncLoopThread
 
 
-FIRMWARE_VERSION = "V0.0.1"
+FIRMWARE_VERSION = "V0.0.2"
 
 
 class ConfigToolApp:

@@ -23,6 +23,7 @@ bool Player::is_idle() const {
 }
 
 void Player::abort() {
+  DaisyChain::getInstance().apply_idle_values();
   state_ = State::IDLE;
 }
 

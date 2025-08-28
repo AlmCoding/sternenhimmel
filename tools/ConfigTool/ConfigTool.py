@@ -78,8 +78,8 @@ class ConfigTool:
             return None
 
         print("Device info:")
-        print(f"\tFirmware version: {version}")
-        print(f"\tCalibration name: {name}")
+        print(f"\tFirmware version: '{version}'")
+        print(f"\tCalibration name: '{name}'")
         return version, name
 
     async def send_cmd(self) -> bool:

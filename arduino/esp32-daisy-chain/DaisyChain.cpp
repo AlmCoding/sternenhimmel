@@ -257,7 +257,7 @@ void DaisyChain::flush_chain(ChainIdx idx, bool force) {
   }
 
   for (uint8_t tlc_idx = 0; tlc_idx < CHAIN_SIZE; tlc_idx++) {
-    // Invert tlc_idx and led_idx to match the physical layout
+    // Invert tlc_idx and led_idx to match physical wiring/naming
     uint16_t tlc_idx_inv = CHAIN_SIZE - tlc_idx - 1;
 
     for (uint8_t led_idx = 0; led_idx < (LED_COUNT / 3); led_idx++) {  // LED index is [0, 1, 2, 3]
@@ -265,7 +265,8 @@ void DaisyChain::flush_chain(ChainIdx idx, bool force) {
       uint16_t ch_g = linearize_brightness((*current_brightness)[tlc_idx][led_idx * 3 + 1]);
       uint16_t ch_b = linearize_brightness((*current_brightness)[tlc_idx][led_idx * 3 + 2]);
 
-      chain_.setLed(tlc_idx_inv, led_idx, ch_r, ch_g, ch_b);
+      uint8_t led_idx_inv = (LED_COUNT / 3 - 1) - led_idx;        // Invert led index to match physical wiring/naming
+      chain_.setLed(tlc_idx_inv, led_idx_inv, ch_b, ch_g, ch_r);  // Note the order: B, G, R
     }
   }
 
