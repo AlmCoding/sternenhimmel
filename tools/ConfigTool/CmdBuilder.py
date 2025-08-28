@@ -178,3 +178,17 @@ class CmdBuilder:
     def evaluate_play_show_response(response: bytearray, rid: int) -> bool:
         success, _ = CmdBuilder._evaluate_response(response, rid=rid, status=0)
         return success
+
+    @staticmethod
+    def stop_show(rid: int):
+        doc = {
+            "rid": rid,
+            "cmd": "stop_show",
+        }
+        json_bytes = bytearray(json.dumps(doc, separators=(",", ":")) + "\0", "utf-8")
+        return json_bytes
+
+    @staticmethod
+    def evaluate_stop_show_response(response: bytearray, rid: int) -> bool:
+        success, _ = CmdBuilder._evaluate_response(response, rid=rid, status=0)
+        return success

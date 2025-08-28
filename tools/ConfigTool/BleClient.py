@@ -25,7 +25,7 @@ class BleClient:
         print("Scanning for BLE devices ...")
         devices = await BleakScanner.discover()
         for device in devices:
-            print(device)
+            print(f"\t{device}")
             if device.name == device_name:
                 return device
         return None
@@ -38,7 +38,7 @@ class BleClient:
         print(f"Connecting to {target.name} [{target.address}] ...")
         self.client = BleakClient(target.address)
         await self.client.connect()
-        print("Connected:", self.client.is_connected)
+        print(f"Connected: {bool(self.client.is_connected)}")
 
         if self.client.is_connected:
             self.response_buffer.clear()

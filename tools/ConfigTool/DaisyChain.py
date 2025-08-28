@@ -101,7 +101,8 @@ class DaisyChain:
         print(f"Successfully (re)loaded config ('{self.name}') with {len(self.leds)} LEDs.")
 
     def _load_leds(self, doc: dict):
-        changes_detected = False
+        first_load = len(self.leds) == 0
+        changes_detected = 0
         for idx, led_obj in enumerate(doc["leds"]):
             for key in self.ConfigLedKeys:
                 if key not in list(led_obj.keys()):
@@ -123,17 +124,20 @@ class DaisyChain:
                 # Entry already exists from previous load, check for changes
                 assert self.leds[idx].pcb_index == pcb_idx and self.leds[idx].led_index == led_idx
                 if self.leds[idx].brightness != brightness:
-                    changes_detected = True
+                    changes_detected += 1
                     self.leds[idx].brightness = brightness
                 else:
                     continue  # No change, don't print
             else:
-                changes_detected = True
                 self.leds.append(led)
             print(
                 f"\tLED({pcb_idx:02d},{led_idx:02d}): group='{group:3s}' correction={correction:02d} => brightness={brightness:03d}"
             )
-        return changes_detected
+
+        if changes_detected > 0:
+            print(f"Changes detected in {changes_detected} LED(s).")
+
+        return first_load or changes_detected > 0
 
     def _check_leds(self):
         for idx, led in enumerate(self.leds):

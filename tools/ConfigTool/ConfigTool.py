@@ -2,8 +2,10 @@ import asyncio
 import CmdBuilder as cb
 import DaisyChain as dc
 import BleClient as bc
+from helper import print_pretty_json
 import datetime
 import copy
+import json
 
 
 class ConfigTool:
@@ -13,16 +15,39 @@ class ConfigTool:
         self.rid_counter = 0
         self.verified = False
         self.device_leds = []  # uploaded or downloaded LEDs from device
+        self.cmd_file_data = bytearray()
+        self.cmd_file_rid = 0
 
     async def load(self, config_file_path: str) -> bool:
         self.chain.load_config(config_file_path)
         self.verified = False
         return True
 
+    async def load_cmd(self, cmd_file_path: str) -> bool:
+        try:
+            with open(cmd_file_path, "r", encoding="utf-8") as f:
+                doc = json.load(f)
+        except Exception as e:
+            raise RuntimeError(f"Failed to load command file '{cmd_file_path}': {e}")
+
+        if "rid" not in doc or not isinstance(doc["rid"], int):
+            raise ValueError("Invalid cmd file: 'rid' key missing or not an integer")
+        if "cmd" not in doc or not isinstance(doc["cmd"], str):
+            raise ValueError("Invalid cmd file: 'cmd' key missing or not a string")
+
+        print_pretty_json(doc)
+        self.cmd_file_rid = doc["rid"]
+
+        self.cmd_file_data = bytearray(json.dumps(doc, separators=(",", ":")) + "\0", "utf-8")
+        print(f"Loaded command file: '{cmd_file_path}' and null-terminated it for BLE transmission.")
+        return True
+
     async def connect(self) -> bool:
         if not self.client:
             self.client = bc.BleClient()
         success = await self.client.connect()
+        if not success:
+            self.client = None
         return success
 
     async def disconnect(self) -> bool:
@@ -53,9 +78,36 @@ class ConfigTool:
             return None
 
         print("Device info:")
-        print(f"\tfirmware version: {version}")
-        print(f"\tcalibration name: {name}")
+        print(f"\tFirmware version: {version}")
+        print(f"\tCalibration name: {name}")
         return version, name
+
+    async def send_cmd(self) -> bool:
+        if not self.client:
+            raise RuntimeError("ConfigTool not properly initialized. Call 'connect' first!")
+        if len(self.cmd_file_data) == 0:
+            raise RuntimeError("No command loaded. Call 'load_cmd' first!")
+
+        response = await self.client.send_command(self.cmd_file_data, timeout=3.0)
+        success, _ = cb.CmdBuilder._evaluate_response(response, rid=self.cmd_file_rid, status=0)
+        if not success:
+            print("Command execution failed!")
+            return False
+        return True
+
+    async def stop_show(self) -> bool:
+        if not self.client:
+            raise RuntimeError("ConfigTool not properly initialized. Call 'connect' first!")
+
+        self.rid_counter += 1
+        cmd = cb.CmdBuilder.stop_show(rid=self.rid_counter)
+        response = await self.client.send_command(cmd, timeout=3.0)
+        status = cb.CmdBuilder.evaluate_stop_show_response(response, rid=self.rid_counter)
+        if status:
+            print("Show stopped successfully on device.")
+        else:
+            print("Failed to stop show on device!")
+        return status
 
     def _get_changed_leds(self) -> list[dc.Led]:
         if not self.chain:
@@ -198,12 +250,9 @@ class ConfigTool:
 
 async def main():
     config_tool = ConfigTool()
-    await config_tool.connect()
     await config_tool.load("chain_config.json")
-    await config_tool.upload()
-    await config_tool.load("chain_config.json")
-    await config_tool.upload()
 
+    await config_tool.connect()
     await config_tool.get_info()
 
     if await config_tool.upload():
