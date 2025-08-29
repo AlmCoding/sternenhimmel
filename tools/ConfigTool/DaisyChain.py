@@ -3,7 +3,12 @@ import json
 PCB_COUNT = 60
 LED_COUNT = 12
 LED_TOTAL = PCB_COUNT * LED_COUNT
-MAX_BRIGHTNESS = 100
+MAX_BRIGHTNESS = 100  # Max brightness percentage/level
+# For statistics
+CURRENT_SAFETY_MARGIN = 1.10  # Safety margin for current calculations
+MAX_LED_CURRENT_MA = 21  # Max current per LED in mA (Rref=2400 ohm)
+BASE_CURRENT_MA = 25  # Current consumption of idle/dark PCB
+ESP32_CURRENT_MA = 180  # Current consumption of ESP32 in mA
 
 
 class Led:
@@ -69,6 +74,13 @@ class DaisyChain:
         self.groups = {}
         self.leds = []
         self.ConfigLedKeys = ("pcb_idx", "led_idx", "group", "correction")
+        # Precompute linearization table (gamma correction) for estimating power consumption
+        self.gamma = 2.20
+        self.steps = 101
+        self.range = 65535
+        self.linearization_table = [
+            min(int(((i / (self.steps - 1)) ** self.gamma) * self.range + 0.5), self.range) for i in range(self.steps)
+        ]
 
     def load_config(self, file_path: str):
         if file_path != self.file_path:
@@ -94,10 +106,12 @@ class DaisyChain:
             raise ValueError("Invalid config file: 'groups' must contain at least one entry")
 
         changes_detected = self._load_leds(doc)
-        if not changes_detected:
-            print("No changes detected in LED configuration.")
-
         self._check_leds()  # Validate total number of LEDs and their indices
+
+        if changes_detected:
+            self._print_chain_stats()
+        else:
+            print("No changes detected in LED configuration.")
         print(f"Successfully (re)loaded config ('{self.name}') with {len(self.leds)} LEDs.")
 
     def _load_leds(self, doc: dict):
@@ -150,6 +164,60 @@ class DaisyChain:
 
         if len(self.leds) != LED_TOTAL:
             raise ValueError(f"LEDs length {len(self.leds)} does not match expected {LED_TOTAL}")
+
+    def _print_chain_stats(self):
+        print("Calculating chain statistics...")
+        CHAIN_COUNT = 6  # 60 PCBs / 10 PCBs per chain
+        chain_leds = [[] for _ in range(CHAIN_COUNT)]
+
+        for led in self.leds:
+            chain_idx = (led.pcb_index - 1) // 10
+            chain_leds[chain_idx].append(led)
+
+        assert all(
+            len(cl) == LED_TOTAL // CHAIN_COUNT for cl in chain_leds
+        ), f"Each chain should have exactly {LED_TOTAL // CHAIN_COUNT} LEDs"
+
+        # Current calculations
+        chain_currents_ma = [0 for _ in range(CHAIN_COUNT)]
+        for idx, led in enumerate(chain_leds):
+            chain_currents_ma[idx] = sum(
+                (self.linearization_table[led.brightness] / self.range) * MAX_LED_CURRENT_MA for led in led
+            )
+            base_current = BASE_CURRENT_MA * CHAIN_COUNT
+            chain_currents_ma[idx] = int(
+                (chain_currents_ma[idx] + base_current) * CURRENT_SAFETY_MARGIN
+            )  # Apply safety margin
+            margin = int((CURRENT_SAFETY_MARGIN - 1) * 100)
+            print(
+                f"\tChain {idx+1}: {len(led)} LEDs, Estimated (+{margin}% margin) Current: {chain_currents_ma[idx]} mA"
+            )
+        total_current_ma = sum(chain_currents_ma) + ESP32_CURRENT_MA
+        print(f"Total Estimated Current (including ESP32): {total_current_ma} mA")
+
+        # Brightness calculations
+        chain_avg_brightness = [0 for _ in range(CHAIN_COUNT)]
+        for idx, cl in enumerate(chain_leds):
+            total_brightness = sum(led.brightness for led in cl)
+            chain_avg_brightness[idx] = int(total_brightness / len(cl))
+            print(f"\tChain {idx+1}: {len(cl)} LEDs, Average Brightness: {chain_avg_brightness[idx]}")
+
+        WEIGHT_FACTOR = 1.3  # Empirical factor to weight brightness (higher PCB indices => more weight)
+        chain_pcb_weights = [WEIGHT_FACTOR**i for i in range(10)]
+        print(f"Using PCB weights: {[f'{w:.3f}' for w in chain_pcb_weights]}")
+
+        # Voltage drop factors
+        weighted_avg_brightness = [0 for _ in range(CHAIN_COUNT)]
+        for idx, cl in enumerate(chain_leds):
+            for led in cl:
+                chain_pcb_pos = (led.pcb_index - 1) % 10
+                weighted_avg_brightness[idx] += led.brightness * chain_pcb_weights[chain_pcb_pos]
+            weighted_avg_brightness[idx] = int(weighted_avg_brightness[idx] / len(cl))
+
+        for idx in range(CHAIN_COUNT):
+            print(
+                f"\tChain {idx+1}: {len(cl)} LEDs, Voltage drop factor: {weighted_avg_brightness[idx]/min(weighted_avg_brightness):.2f}"
+            )
 
     def get_leds(self) -> list[Led]:
         return self.leds
