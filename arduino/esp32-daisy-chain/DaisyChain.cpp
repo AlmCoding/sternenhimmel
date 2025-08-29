@@ -3,8 +3,8 @@
 
 #define DEBUG_ENABLE_DAISYCHAIN 1
 #if ((DEBUG_ENABLE_DAISYCHAIN == 1) && (ENABLE_DEBUG_OUTPUT == 1))
-#define DEBUG_INFO(f, ...) Serial.printf("[INF][DaisyChain]: " f "\n", ##__VA_ARGS__)
-#define DEBUG_ERROR(f, ...) Serial.printf("[ERR][DaisyChain]: " f "\n", ##__VA_ARGS__)
+#define DEBUG_INFO(f, ...) debug_print("[INF][Chain]", f, ##__VA_ARGS__)
+#define DEBUG_ERROR(f, ...) debug_print("[ERR][Chain]", f, ##__VA_ARGS__)
 #else
 #define DEBUG_INFO(...)
 #define DEBUG_ERROR(...)

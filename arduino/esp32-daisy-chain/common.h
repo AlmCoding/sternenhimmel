@@ -85,4 +85,6 @@ static const uint16_t BRIGHTNESS_LINEARIZATION_TABLE[101] = {
 #define ASSERT(condition)
 #endif
 
+void debug_print(const char* prefix, const char* fmt, ...);
+
 #endif  // CHAIN_CONFIG_H

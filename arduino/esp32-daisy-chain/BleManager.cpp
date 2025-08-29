@@ -3,8 +3,8 @@
 
 #define DEBUG_ENABLE_BLEMANAGER 1
 #if ((DEBUG_ENABLE_BLEMANAGER == 1) && (ENABLE_DEBUG_OUTPUT == 1))
-#define DEBUG_INFO(f, ...) Serial.printf("[INF][BleMgr]: " f "\n", ##__VA_ARGS__)
-#define DEBUG_ERROR(f, ...) Serial.printf("[ERR][BleMgr]: " f "\n", ##__VA_ARGS__)
+#define DEBUG_INFO(f, ...) debug_print("[INF][BleMgr]", f, ##__VA_ARGS__)
+#define DEBUG_ERROR(f, ...) debug_print("[ERR][BleMgr]", f, ##__VA_ARGS__)
 #else
 #define DEBUG_INFO(...)
 #define DEBUG_ERROR(...)
@@ -34,7 +34,7 @@ class RxCallbacks : public NimBLECharacteristicCallbacks {
 class TxCallbacks : public NimBLECharacteristicCallbacks {
   void onSubscribe(NimBLECharacteristic* c, NimBLEConnInfo& connInfo, uint16_t subValue) override {
     if (subValue == 1 || subValue == 3) {
-      DEBUG_ERROR("Client subscription (value: %d) is invalid!", subValue);
+      DEBUG_ERROR("Client subscription (value: %u) is invalid!", subValue);
     }
     BleManager::getInstance().onSubscribe(subValue == 2);
   }
@@ -114,7 +114,7 @@ void BleManager::onDataReceived(const uint8_t data[], size_t length) {
     return;
   }
 
-  DEBUG_INFO("Data received (%zu): %.*s", length, static_cast<int>(length), data);
+  DEBUG_INFO("Data received (%zu): '%.*s'", length, static_cast<int>(length), data);
   Controller::getInstance().dataReceivedCallback(data, length);
 }
 
@@ -132,7 +132,7 @@ bool BleManager::writeData(const uint8_t data[], size_t length) {
   tx_length_ = length;                    // Store the length of the data
   tx_index_ = 0;                          // Reset the index for TX data
 
-  DEBUG_INFO("Initiate TX of %d bytes [...]", tx_length_);
+  DEBUG_INFO("Initiate TX of %zu bytes [...]", tx_length_);
   tx_start_time_ = millis();
   tx_confirmed_ = true;
   tx_ongoing_ = true;
@@ -152,7 +152,7 @@ bool BleManager::writeDataChunk() {
     // More data to send, continue with next write cycle
     size_t remaining = tx_length_ - tx_index_;
     size_t length = (remaining < net_mtu_) ? remaining : net_mtu_;
-    DEBUG_INFO("Send data (len: %d) chunk ...", length);
+    DEBUG_INFO("Send data (len: %zu) chunk ...", length);
 
     txCharacteristic_->setValue(tx_data_ + tx_index_, length);
     if (txCharacteristic_->indicate() == false) {
@@ -163,7 +163,7 @@ bool BleManager::writeDataChunk() {
     return true;
   }
 
-  DEBUG_INFO("All data (len: %d) sent [OK]", tx_length_);
+  DEBUG_INFO("All data (len: %zu) sent [OK]", tx_length_);
   tx_ongoing_ = false;  // Reset flag after write operation
   tx_confirmed_ = false;
   return true;
@@ -172,13 +172,6 @@ bool BleManager::writeDataChunk() {
 void BleManager::run() {
   // Handle ongoing TX operations
   if (tx_ongoing_ == true) {
-    // Check for timeout expiration
-    if (millis() - tx_start_time_ >= TxTimeout) {
-      DEBUG_ERROR("TX timeout expired, aborting TX operation!");
-      tx_ongoing_ = false;
-      tx_confirmed_ = false;
-    }
-
     // Check if next chunk can be sent
     if (tx_confirmed_ == true) {
       if (writeDataChunk() == false) {
@@ -186,6 +179,10 @@ void BleManager::run() {
         tx_ongoing_ = false;
         tx_confirmed_ = false;
       }
+    } else if (millis() - tx_start_time_ >= TxTimeout) {
+      DEBUG_ERROR("TX timeout expired, aborting TX operation!");
+      tx_ongoing_ = false;
+      tx_confirmed_ = false;
     }
   }
 }

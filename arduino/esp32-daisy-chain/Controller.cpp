@@ -5,8 +5,8 @@
 
 #define DEBUG_ENABLE_CONTROLLER 1
 #if ((DEBUG_ENABLE_CONTROLLER == 1) && (ENABLE_DEBUG_OUTPUT == 1))
-#define DEBUG_INFO(f, ...) Serial.printf("[INF][Ctrl]: " f "\n", ##__VA_ARGS__)
-#define DEBUG_ERROR(f, ...) Serial.printf("[ERR][Ctrl]: " f "\n", ##__VA_ARGS__)
+#define DEBUG_INFO(f, ...) debug_print("[INF][Ctrl]", f, ##__VA_ARGS__)
+#define DEBUG_ERROR(f, ...) debug_print("[ERR][Ctrl]", f, ##__VA_ARGS__)
 #else
 #define DEBUG_INFO(...)
 #define DEBUG_ERROR(...)
@@ -23,7 +23,7 @@ void Controller::initialize() {
   rx_start_time_ = 0;   // Reset RX start time
   rx_ongoing_ = false;  // Reset RX ongoing flag
 
-  DEBUG_INFO("Controller initialized [OK]");
+  DEBUG_INFO("Initialize Controller [OK]");
 }
 
 void Controller::dataReceivedCallback(const uint8_t data[], size_t length) {
@@ -31,6 +31,10 @@ void Controller::dataReceivedCallback(const uint8_t data[], size_t length) {
     DEBUG_ERROR("Received data is NULL or empty!");
     return;
   }
+
+  // Reset timeout timer for every received data chunk
+  rx_start_time_ = millis();
+  DEBUG_INFO("===> Reset RX timeout timer!");
 
   if (rx_ongoing_ == false) {
     // Start new RX operation
@@ -43,32 +47,27 @@ void Controller::dataReceivedCallback(const uint8_t data[], size_t length) {
     return;
   }
 
-  // Reset timeout timer for every received data chunk
-  rx_start_time_ = millis();
-
   memcpy(rx_buffer_ + rx_index_, data, length);
   rx_index_ += length;
 
   // Check if string terminator is present
   if (rx_index_ > 0 && rx_buffer_[rx_index_ - 1] == '\0') {
-    DEBUG_INFO("Full doc received: %.*s", static_cast<int>(rx_index_), rx_buffer_);
+    DEBUG_INFO("Full doc (%zu) received: '%.*s'", rx_index_, static_cast<int>(rx_index_), rx_buffer_);
     process_rx_data_ = true;
   }
 }
 
 void Controller::run() {
   if (rx_ongoing_ == true) {
-    // Check for timeout expiration
-    if (millis() - rx_start_time_ >= RxTimeout) {
-      DEBUG_ERROR("RX timeout expired, aborting RX operation!");
-      rx_index_ = 0;
-      rx_ongoing_ = false;
-      process_rx_data_ = false;
-    }
-
     // Check if data can be processed
     if (process_rx_data_ == true) {
       processReceivedData();
+      rx_index_ = 0;
+      rx_ongoing_ = false;
+      process_rx_data_ = false;
+
+    } else if (millis() - rx_start_time_ >= RxTimeout) {
+      DEBUG_ERROR("RX timeout expired, aborting RX operation!");
       rx_index_ = 0;
       rx_ongoing_ = false;
       process_rx_data_ = false;
@@ -185,10 +184,10 @@ void Controller::handleSetBrightness() {
     uint8_t pcb_idx = led[0];
     uint8_t led_idx = led[1];
     uint8_t brightness = led[2];
-    DEBUG_INFO("  LED(%d, %d): brightness=%d", pcb_idx, led_idx, brightness);
+    DEBUG_INFO("  LED(%u, %u) = %u", pcb_idx, led_idx, brightness);
 
     if (setLedObj(obj, pcb_idx, led_idx, brightness) == false) {
-      sendStatusResponse(-1, KEY_MSG, "Invalid LED object: [%d, %d, %d]", pcb_idx, led_idx, brightness);
+      sendStatusResponse(-1, KEY_MSG, "Invalid LED object: [%u, %u, %u]", pcb_idx, led_idx, brightness);
       return;
     }
     DaisyChain::getInstance().set_idle_leds(&obj, 1);
@@ -215,10 +214,10 @@ void Controller::handleGetBrightness() {
     led = rx_json_doc_[KEY_LEDS][i];
     uint8_t pcb_idx = led[0];
     uint8_t led_idx = led[1];
-    DEBUG_INFO("  LED(%d, %d)", pcb_idx, led_idx);
+    DEBUG_INFO("  LED(%u, %u)", pcb_idx, led_idx);
 
     if (setLedObj(obj, pcb_idx, led_idx, 0) == false) {
-      sendStatusResponse(-1, KEY_MSG, "Invalid LED object: [%d, %d]", pcb_idx, led_idx);
+      sendStatusResponse(-1, KEY_MSG, "Invalid LED object: [%u, %u]", pcb_idx, led_idx);
       return;
     }
     DaisyChain::getInstance().get_idle_leds(&obj, 1);
@@ -240,7 +239,7 @@ void Controller::handleGetBrightness() {
   tx_buffer_[len] = '\0';  // Ensure null-terminated string
   len++;                   // Include null terminator in length
 
-  DEBUG_INFO("Sending response (%d): %s", len, tx_buffer_);
+  DEBUG_INFO("Sending response (%zu): %s", len, tx_buffer_);
   if (BleManager::getInstance().writeData(tx_buffer_, len) == false) {
     DEBUG_ERROR("Failed to send response via BLE!");
   }
@@ -311,7 +310,7 @@ void Controller::sendStatusResponse(int status, const char key[], const char val
   tx_buffer_[len] = '\0';  // Ensure null-terminated string
   len++;                   // Include null terminator in length
 
-  DEBUG_INFO("Sending response (%d): %s", len, tx_buffer_);
+  DEBUG_INFO("Sending response (%zu): %s", len, tx_buffer_);
   if (BleManager::getInstance().writeData(tx_buffer_, len) == false) {
     DEBUG_ERROR("Failed to send response via BLE!");
   }
@@ -341,10 +340,10 @@ bool Controller::extractGroups() {
 
   group_count_ = rx_json_doc_[KEY_GROUPS].size();
   if (group_count_ == 0 || group_count_ > MaxLedGroups) {
-    sendStatusResponse(-1, KEY_MSG, "Invalid number of groups: %d", group_count_);
+    sendStatusResponse(-1, KEY_MSG, "Invalid number of groups: %zu", group_count_);
     return false;
   }
-  DEBUG_INFO("Start parsing %d groups:", group_count_);
+  DEBUG_INFO("Start parsing %zu groups:", group_count_);
 
   JsonArray group;
   size_t led_count_total = 0;
@@ -359,7 +358,7 @@ bool Controller::extractGroups() {
 
     led_count_total += led_count;
     if (led_count_total > MaxLedObjects) {
-      sendStatusResponse(-1, KEY_MSG, "Groups exceed max number (%d) of LED objects!", MaxLedObjects);
+      sendStatusResponse(-1, KEY_MSG, "Groups exceed max number (%zu) of LED objects!", MaxLedObjects);
       return false;
     }
 
@@ -368,10 +367,10 @@ bool Controller::extractGroups() {
       led = group[j];
       uint8_t pcb_idx = led[0];
       uint8_t led_idx = led[1];
-      DEBUG_INFO("  Group %d, LED(%d, %d)", i + 1, pcb_idx, led_idx);
+      DEBUG_INFO("  Group %d, LED(%u, %u)", i + 1, pcb_idx, led_idx);
 
       if (setLedObj(groups_[i].leds[j], pcb_idx, led_idx, 0) == false) {
-        sendStatusResponse(-1, KEY_MSG, "Invalid LED object in group %d: [%d, %d]", i + 1, pcb_idx, led_idx);
+        sendStatusResponse(-1, KEY_MSG, "Invalid LED object in group %zu: [%u, %u]", i + 1, pcb_idx, led_idx);
         return false;
       }
     }
@@ -387,10 +386,10 @@ bool Controller::extractSequence() {
 
   sequence_length_ = rx_json_doc_[KEY_SEQUENCE].size();
   if (sequence_length_ == 0 || sequence_length_ > MaxSequenceSteps) {
-    sendStatusResponse(-1, KEY_MSG, "Invalid number of sequence steps: %d", sequence_length_);
+    sendStatusResponse(-1, KEY_MSG, "Invalid number of sequence steps: %zu", sequence_length_);
     return false;
   }
-  DEBUG_INFO("Start parsing %d sequence steps:", sequence_length_);
+  DEBUG_INFO("Start parsing %zu sequence steps:", sequence_length_);
 
   JsonArray step;
   for (size_t i = 0; i < sequence_length_; i++) {
@@ -404,7 +403,7 @@ bool Controller::extractSequence() {
     bool return_to_idle = step[6] != 0;
 
     if (group_idx >= group_count_) {
-      sendStatusResponse(-1, KEY_MSG, "Invalid group index (%d) in sequence step %d", group_idx, i + 1);
+      sendStatusResponse(-1, KEY_MSG, "Invalid group index (%zu) in sequence step %zu", group_idx, i + 1);
       return false;
     }
 
@@ -417,7 +416,7 @@ bool Controller::extractSequence() {
     sequence_[i].repetitions = repetitions;
     sequence_[i].idle_return = return_to_idle;
 
-    DEBUG_INFO("  Step %d: Group %d, ramp_down=%dms, pause=%dms, ramp_up=%dms, pulse=%dms, reps=%d, return=%d", i + 1,
+    DEBUG_INFO("  Step %zu: Group %zu, ramp_down=%ums, pause=%ums, ramp_up=%ums, pulse=%ums, reps=%u, return=%u", i + 1,
                group_idx, ramp_down_ms, pause_ms, ramp_up_ms, pulse_ms, repetitions, return_to_idle);
   }
   return true;

@@ -186,7 +186,7 @@ class ConfigTool:
                 or led.brightness != expected_led.brightness
             ):
                 print(
-                    f"\tLED data mismatch for LED({led.pcb_index},{led.led_index}): expected {expected_led.brightness}, got {led.brightness}"
+                    f"\tMismatch for LED({led.pcb_index},{led.led_index}): expected {expected_led.brightness}, got {led.brightness}"
                 )
                 mismatch_count += 1
 

@@ -3,8 +3,8 @@
 
 #define DEBUG_ENABLE_PLAYER 1
 #if ((DEBUG_ENABLE_PLAYER == 1) && (ENABLE_DEBUG_OUTPUT == 1))
-#define DEBUG_INFO(f, ...) Serial.printf("[INF][Player]: " f "\n", ##__VA_ARGS__)
-#define DEBUG_ERROR(f, ...) Serial.printf("[ERR][Player]: " f "\n", ##__VA_ARGS__)
+#define DEBUG_INFO(f, ...) debug_print("[INF][Player]", f, ##__VA_ARGS__)
+#define DEBUG_ERROR(f, ...) debug_print("[ERR][Player]", f, ##__VA_ARGS__)
 #else
 #define DEBUG_INFO(...)
 #define DEBUG_ERROR(...)
@@ -36,7 +36,7 @@ void Player::play_sequence(const SequenceStep sequence[], size_t count) {
   bool invalid_step = false;
   for (size_t i = 0; i < count; i++) {
     if (is_step_valid(sequence[i]) == false) {
-      DEBUG_ERROR("Invalid sequence step at index %d!", i);
+      DEBUG_ERROR("Invalid sequence step at index %zu!", i);
       invalid_step = true;
       continue;
     }
@@ -52,7 +52,7 @@ void Player::play_sequence(const SequenceStep sequence[], size_t count) {
     return;
   }
 
-  DEBUG_INFO("Play sequence with %d steps [...]", count);
+  DEBUG_INFO("Play sequence with %zu steps [...]", count);
 
   sequence_ = const_cast<SequenceStep*>(sequence);
   step_count_ = count;
@@ -84,8 +84,8 @@ void Player::play_step(const SequenceStep& step) {
   return_to_idle_ = step.idle_return;
 
   DEBUG_INFO(
-      "Play step (%d/%d) with %d LEDs, ramp down: %d ms, pause: %d ms, ramp up: %d ms, pulse: %d ms, "
-      "repetitions: %d",
+      "Play step (%zu/%zu) with %zu LEDs, ramp down: %u ms, pause: %u ms, ramp up: %u ms, pulse: %u ms, "
+      "repetitions: %u",
       step_index_ + 1, step_count_, size_, ramp_down_.duration_ms, pause_.duration_ms, ramp_up_.duration_ms,
       pulse_.duration_ms, repetitions_);
   state_ = State::RAMP_DOWN;
@@ -105,13 +105,13 @@ bool Player::is_step_valid(const SequenceStep& step) const {
 
   for (size_t i = 0; i < step.size; i++) {
     if (static_cast<uint8_t>(step.leds[i].chain_idx) >= static_cast<uint8_t>(ChainIdx::CHAIN_COUNT)) {
-      DEBUG_ERROR("Invalid chain index: %d", step.leds[i].chain_idx);
+      DEBUG_ERROR("Invalid chain index: %u", step.leds[i].chain_idx);
       return false;
     } else if (step.leds[i].led_idx >= LED_COUNT) {
-      DEBUG_ERROR("Invalid led index: %d", step.leds[i].led_idx);
+      DEBUG_ERROR("Invalid led index: %u", step.leds[i].led_idx);
       return false;
     } else if (step.leds[i].brightness > static_cast<BrgNumber>(BrgName::MAX)) {
-      DEBUG_ERROR("Invalid brightness value: %d", step.leds[i].brightness);
+      DEBUG_ERROR("Invalid brightness value: %u", step.leds[i].brightness);
       return false;
     }
   }
@@ -122,7 +122,7 @@ bool Player::is_step_valid(const SequenceStep& step) const {
 void Player::run() {
   uint32_t run_delay_ms = millis() - last_run_ms_;
   if (run_delay_ms >= RampTickTimeMinMs) {
-    DEBUG_ERROR("Player run delay too long: %d ms", run_delay_ms);
+    DEBUG_ERROR("Player run delay too long: %u ms", run_delay_ms);
   }
   digitalWrite(RunTogglePin, !digitalRead(RunTogglePin));
   last_run_ms_ = millis();

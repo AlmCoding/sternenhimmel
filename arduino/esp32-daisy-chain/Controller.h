@@ -5,7 +5,7 @@
 #include "common.h"
 
 class Controller {
-  constexpr static uint32_t RxTimeout = 1500;        // Timeout for RX in milliseconds
+  constexpr static uint32_t RxTimeout = 1000;        // Timeout for RX in milliseconds
   constexpr static size_t RxBufferSize = 1024 * 10;  // Size of the RX buffer
   constexpr static size_t TxBufferSize = 1024 * 10;  // Size of the TX buffer
 

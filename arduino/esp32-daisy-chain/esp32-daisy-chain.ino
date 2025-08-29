@@ -8,8 +8,8 @@
 
 #define DEBUG_ENABLE_MAIN 1
 #if ((DEBUG_ENABLE_MAIN == 1) && (ENABLE_DEBUG_OUTPUT == 1))
-#define DEBUG_INFO(f, ...) Serial.printf("[INF][Main]: " f "\n", ##__VA_ARGS__)
-#define DEBUG_ERROR(f, ...) Serial.printf("[ERR][Main]: " f "\n", ##__VA_ARGS__)
+#define DEBUG_INFO(f, ...) debug_print("[INF][Main]", f, ##__VA_ARGS__)
+#define DEBUG_ERROR(f, ...) debug_print("[ERR][Main]", f, ##__VA_ARGS__)
 #else
 #define DEBUG_INFO(...)
 #define DEBUG_ERROR(...)
@@ -315,7 +315,7 @@ void setup() {
   setCpuFrequencyMhz(240);
 
 #if (ENABLE_DEBUG_OUTPUT == 1)
-  Serial.begin(115200);
+  Serial.begin(500000);  // 500 kbps
 #endif
   DEBUG_INFO("%s", DIVIDER);
   DEBUG_INFO("Setup ESP32-daisy-chain [...]");
