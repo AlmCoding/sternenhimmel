@@ -121,14 +121,15 @@ bool Player::is_step_valid(const SequenceStep& step) const {
 
 void Player::run() {
   uint32_t run_delay_ms = millis() - last_run_ms_;
-  if (run_delay_ms >= RampTickTimeMinMs) {
-    DEBUG_ERROR("Player run delay too long: %u ms", run_delay_ms);
-  }
-  digitalWrite(RunTogglePin, !digitalRead(RunTogglePin));
   last_run_ms_ = millis();
+  digitalWrite(RunTogglePin, !digitalRead(RunTogglePin));
 
   if (state_ == State::IDLE) {
     return;
+  }
+
+  if (run_delay_ms >= RampTickTimeMinMs) {
+    DEBUG_ERROR("Player run delay too long: %u ms", run_delay_ms);
   }
 
   if (state_ == State::RAMP_DOWN) {

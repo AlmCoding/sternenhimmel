@@ -34,7 +34,7 @@ void Controller::dataReceivedCallback(const uint8_t data[], size_t length) {
 
   // Reset timeout timer for every received data chunk
   rx_start_time_ = millis();
-  //DEBUG_INFO("===> Reset RX timeout timer!");
+  // DEBUG_INFO("===> Reset RX timeout timer!");
 
   if (rx_ongoing_ == false) {
     // Start new RX operation
@@ -127,8 +127,7 @@ void Controller::processReceivedData() {
 void Controller::handleGetVersion() {
   DEBUG_INFO("CMD: '%s' [...]", CMD_GET_VERSION);
 
-  sendStatusResponse(0, KEY_VERSION, "V%d.%d.%d", FIRMWARE_VERSION_MAJOR, FIRMWARE_VERSION_MINOR,
-                     FIRMWARE_VERSION_PATCH);
+  sendStatusResponse(0, KEY_VERSION, FIRMWARE_VERSION);
   DEBUG_INFO("CMD: '%s' [OK]", CMD_GET_VERSION);
 }
 

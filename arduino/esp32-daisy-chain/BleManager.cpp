@@ -1,4 +1,5 @@
 #include "BleManager.h"
+#include "BleOta.h"
 #include "Controller.h"
 
 #define DEBUG_ENABLE_BLEMANAGER 1
@@ -54,7 +55,6 @@ void BleManager::initialize() {
   server_->setCallbacks(new ServerCallbacks());
 
   service_ = server_->createService(SERVICE_UUID);
-
   // RX characteristic (Client -> ESP32)
   rxCharacteristic_ = service_->createCharacteristic(CHARACTERISTIC_UUID_RX, NIMBLE_PROPERTY::WRITE);
   rxCharacteristic_->setCallbacks(new RxCallbacks());
@@ -62,19 +62,23 @@ void BleManager::initialize() {
   // TX characteristic (ESP32 -> Client)
   txCharacteristic_ = service_->createCharacteristic(CHARACTERISTIC_UUID_TX, NIMBLE_PROPERTY::INDICATE);
   txCharacteristic_->setCallbacks(new TxCallbacks());
-
   service_->start();
+
   advertising_ = NimBLEDevice::getAdvertising();
   advertising_->setName(DEVICE_NAME);
   advertising_->addServiceUUID(service_->getUUID());
+
+  BleOta::getInstance().initialize(server_);
+
   advertising_->enableScanResponse(true);
   startAdvertising();
 
+  DEBUG_INFO("BLE device: '%s':%s", DEVICE_NAME, NimBLEDevice::getAddress().toString().c_str());
   DEBUG_INFO("Initialize BLE Manager [OK]");
 }
 
 void BleManager::startAdvertising() {
-  DEBUG_INFO("Start advertising BLE service.");
+  DEBUG_INFO("Start advertising BLE services.");
   advertising_->start();
 }
 
