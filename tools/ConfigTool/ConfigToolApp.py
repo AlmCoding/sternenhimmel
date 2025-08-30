@@ -1,14 +1,12 @@
 import tkinter as tk
 from tkinter import filedialog, messagebox, scrolledtext
 import datetime
-import asyncio
-import threading
 import queue
 import wrapper as aw
 from helper import AsyncLoopThread
 
 
-FIRMWARE_VERSION = "V0.0.2"
+FIRMWARE_VERSION = "V0.0.3"
 
 
 class ConfigToolApp:
