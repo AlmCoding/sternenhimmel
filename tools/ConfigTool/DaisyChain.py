@@ -4,11 +4,16 @@ PCB_COUNT = 60
 LED_COUNT = 12
 LED_TOTAL = PCB_COUNT * LED_COUNT
 MAX_BRIGHTNESS = 100  # Max brightness percentage/level
-# For statistics
+
+# For power calculations
 CURRENT_SAFETY_MARGIN = 1.10  # Safety margin for current calculations
 MAX_LED_CURRENT_MA = 21  # Max current per LED in mA (Rref=2400 ohm)
 BASE_CURRENT_MA = 25  # Current consumption of idle/dark PCB
 ESP32_CURRENT_MA = 180  # Current consumption of ESP32 in mA
+
+LINEAR_GAMMA = 2.0  # Gamma correction factor for LED brightness linearization
+LINEAR_STEPS = 101  # Number of steps in linearization table (0-100%)
+LINEAR_RANGE = 65535  # Range of linearization table (16-bit)
 
 
 class Led:
@@ -74,12 +79,11 @@ class DaisyChain:
         self.groups = {}
         self.leds = []
         self.ConfigLedKeys = ("pcb_idx", "led_idx", "group", "correction")
-        # Precompute linearization table (gamma correction) for estimating power consumption
-        self.gamma = 2.20
-        self.steps = 101
-        self.range = 65535
+        # Precompute linearization table (gamma correction) for calculating power consumption
+        global LINEAR_GAMMA, LINEAR_STEPS, LINEAR_RANGE
         self.linearization_table = [
-            min(int(((i / (self.steps - 1)) ** self.gamma) * self.range + 0.5), self.range) for i in range(self.steps)
+            min(int(((i / (LINEAR_STEPS - 1)) ** LINEAR_GAMMA) * LINEAR_RANGE + 0.5), LINEAR_RANGE)
+            for i in range(LINEAR_STEPS)
         ]
 
     def load_config(self, file_path: str):

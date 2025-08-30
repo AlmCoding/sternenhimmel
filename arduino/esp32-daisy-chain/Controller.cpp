@@ -34,7 +34,7 @@ void Controller::dataReceivedCallback(const uint8_t data[], size_t length) {
 
   // Reset timeout timer for every received data chunk
   rx_start_time_ = millis();
-  DEBUG_INFO("===> Reset RX timeout timer!");
+  //DEBUG_INFO("===> Reset RX timeout timer!");
 
   if (rx_ongoing_ == false) {
     // Start new RX operation
