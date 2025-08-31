@@ -91,13 +91,20 @@ class DaisyChain:
             for i in range(LINEAR_STEPS)
         ]
         self.print_cb = None
+        self.log_buffer = ""
 
-    def log(self, message):
+    def log(self, message, buffer_log=False):
         message = format_log_message(message, "[DaisyChain]")
+        if buffer_log:
+            self.log_buffer += message + "\n"
+            return
+        self.log_buffer += message
+
         if self.print_cb:
-            self.print_cb(message)
+            self.print_cb(self.log_buffer)
         else:
-            print(message)
+            print(self.log_buffer)
+        self.log_buffer = ""
 
     def register_print_callback(self, print_cb):
         self.print_cb = print_cb
@@ -165,11 +172,12 @@ class DaisyChain:
             else:
                 self.leds.append(led)
             self.log(
-                f"\tLED({pcb_idx:02d},{led_idx:02d}): group='{group:3s}' correction={correction:02d} => brightness={brightness:03d}"
+                f"\tLED({pcb_idx:02d},{led_idx:02d}): group='{group:3s}' correction={correction:02d} => brightness={brightness:03d}",
+                buffer_log=True,  # Buffer log to speed up loading because print_cb is slowing things down a lot
             )
 
         if changes_detected > 0:
-            self.log(f"Changes detected in {changes_detected} LED(s).")
+            self.log(f"Changes detected in {changes_detected} LED(s).", buffer_log=True)
 
         return first_load or changes_detected > 0
 

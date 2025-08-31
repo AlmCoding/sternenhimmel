@@ -53,7 +53,7 @@ class ConfigTool:
         if "cmd" not in doc or not isinstance(doc["cmd"], str):
             raise ValueError("Invalid cmd file: 'cmd' key missing or not a string")
 
-        print_pretty_json(doc)
+        self.log(print_pretty_json(doc))
         self.cmd_file_rid = doc["rid"]
 
         self.cmd_file_data = bytearray(json.dumps(doc, separators=(",", ":")) + "\0", "utf-8")

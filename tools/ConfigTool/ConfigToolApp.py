@@ -280,14 +280,20 @@ class ConfigToolApp:
         try:
             while True:
                 tag, result = self.result_queue.get_nowait()
-                status, message = result if isinstance(result, tuple) else (False, result)
-                update_buttons = True
+
+                if tag == "print":
+                    message = result
+                    assert isinstance(message, str)
+                    self.log(message, add_prefix=False)
+                    continue
+
+                status = result
+                assert isinstance(status, bool), f"Expected bool status for tag '{tag}', got {type(status)}"
+
                 if tag == "connect":
                     self.state.connected = status
                 elif tag == "disconnect":
                     self.state.connected = False
-                elif tag == "get_info":
-                    pass
                 elif tag == "load_config":
                     self.state.loaded = status
                     self.state.uploaded = False
@@ -304,16 +310,15 @@ class ConfigToolApp:
                     pass
                 elif tag == "stop_show":
                     pass
+                elif tag == "get_info":
+                    pass
                 elif tag == "ota_update":
                     pass
-                elif tag == "print":
-                    update_buttons = False  # Just a log message, no button update
                 else:
                     raise ValueError(f"Unhandled tag in result queue: {tag}")
 
-                if update_buttons:
-                    self.update_buttons(action_ongoing=False)
-                self.log(message, add_prefix=False)
+                self.update_buttons(action_ongoing=False)
+                self.log("", add_prefix=False)  # Add a newline after each operation log
         except queue.Empty:
             pass
         self.root.after(100, self.process_queue)

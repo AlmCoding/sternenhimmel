@@ -89,5 +89,5 @@ def print_pretty_json(data: Union[Dict, List], indent: int = 2) -> str:
             return "[" + ", ".join(items) + "]"
 
     pretty_string = _format_value(data, 0, True)
-    print(pretty_string)
+    # print(pretty_string)
     return pretty_string
