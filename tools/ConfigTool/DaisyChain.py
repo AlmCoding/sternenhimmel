@@ -1,4 +1,5 @@
 import json
+from helper import format_log_message
 
 
 PCB_COUNT = 60
@@ -89,14 +90,25 @@ class DaisyChain:
             min(int(((i / (LINEAR_STEPS - 1)) ** LINEAR_GAMMA) * LINEAR_RANGE + 0.5), LINEAR_RANGE)
             for i in range(LINEAR_STEPS)
         ]
+        self.print_cb = None
+
+    def log(self, message):
+        message = format_log_message(message, "[DaisyChain]")
+        if self.print_cb:
+            self.print_cb(message)
+        else:
+            print(message)
+
+    def register_print_callback(self, print_cb):
+        self.print_cb = print_cb
 
     def load_config(self, file_path: str):
         if file_path != self.file_path:
-            print(f"Loading config file: '{file_path}'")
+            self.log(f"Loading config file: '{file_path}'")
             self.file_path = file_path
             self.leds = []  # Clear existing LEDs if loading a different file
         else:
-            print(f"Reloading config file: '{file_path}'")
+            self.log(f"Reloading config file: '{file_path}'")
 
         with open(file_path, "r", encoding="utf-8") as f:
             doc = json.load(f)
@@ -119,8 +131,8 @@ class DaisyChain:
         if changes_detected:
             self._print_chain_stats()
         else:
-            print("No changes detected in LED configuration.")
-        print(f"Successfully (re)loaded config ('{self.name}') with {len(self.leds)} LEDs.")
+            self.log("No changes detected in LED configuration.")
+        self.log(f"Successfully (re)loaded config ('{self.name}') with {len(self.leds)} LEDs.")
 
     def _load_leds(self, doc: dict):
         first_load = len(self.leds) == 0
@@ -152,12 +164,12 @@ class DaisyChain:
                     continue  # No change, don't print
             else:
                 self.leds.append(led)
-            print(
+            self.log(
                 f"\tLED({pcb_idx:02d},{led_idx:02d}): group='{group:3s}' correction={correction:02d} => brightness={brightness:03d}"
             )
 
         if changes_detected > 0:
-            print(f"Changes detected in {changes_detected} LED(s).")
+            self.log(f"Changes detected in {changes_detected} LED(s).")
 
         return first_load or changes_detected > 0
 
@@ -175,7 +187,7 @@ class DaisyChain:
 
     def _print_chain_stats(self):
         global CHAIN_COUNT, LED_TOTAL, WEIGHT_FACTOR
-        print("Calculating chain statistics...")
+        self.log("Calculating chain statistics...")
         chain_leds = [[] for _ in range(CHAIN_COUNT)]
 
         for led in self.leds:
@@ -197,21 +209,21 @@ class DaisyChain:
                 (chain_currents_ma[idx] + base_current) * CURRENT_SAFETY_MARGIN
             )  # Apply safety margin
             margin = int((CURRENT_SAFETY_MARGIN - 1) * 100)
-            print(
+            self.log(
                 f"\tChain {idx+1}: {len(led)} LEDs, Estimated (+{margin}% margin) Current: {chain_currents_ma[idx]} mA"
             )
         total_current_ma = sum(chain_currents_ma) + ESP32_CURRENT_MA
-        print(f"Total Estimated Current (including ESP32): {total_current_ma} mA")
+        self.log(f"Total Estimated Current (including ESP32): {total_current_ma} mA")
 
         # Brightness calculations
         chain_avg_brightness = [0 for _ in range(CHAIN_COUNT)]
         for idx, cl in enumerate(chain_leds):
             total_brightness = sum(led.brightness for led in cl)
             chain_avg_brightness[idx] = int(total_brightness / len(cl))
-            print(f"\tChain {idx+1}: {len(cl)} LEDs, Average Brightness: {chain_avg_brightness[idx]}")
+            self.log(f"\tChain {idx+1}: {len(cl)} LEDs, Average Brightness: {chain_avg_brightness[idx]}")
 
         chain_pcb_weights = [WEIGHT_FACTOR**i for i in range(10)]
-        print(f"Using PCB weights: {[f'{w:.3f}' for w in chain_pcb_weights]}")
+        self.log(f"Using PCB weights: {[f'{w:.3f}' for w in chain_pcb_weights]}")
 
         # Voltage drop factors
         weighted_avg_brightness = [0 for _ in range(CHAIN_COUNT)]
@@ -222,7 +234,7 @@ class DaisyChain:
             weighted_avg_brightness[idx] = int(weighted_avg_brightness[idx] / len(cl))
 
         for idx in range(CHAIN_COUNT):
-            print(
+            self.log(
                 f"\tChain {idx+1}: {len(cl)} LEDs, Voltage drop factor: {weighted_avg_brightness[idx]/min(weighted_avg_brightness):.2f}"
             )
 

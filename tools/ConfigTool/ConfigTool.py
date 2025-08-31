@@ -2,8 +2,9 @@ import asyncio
 import CmdBuilder as cb
 import DaisyChain as dc
 import BleClient as bc
-from helper import print_pretty_json
-from nimbleota import perform_ota_update
+import BleOta as bo
+from helper import format_log_message, print_pretty_json
+from typing import Callable
 import datetime
 import copy
 import json
@@ -11,13 +12,29 @@ import json
 
 class ConfigTool:
     def __init__(self):
+        self.client = bc.BleClient()
         self.chain = dc.DaisyChain()
-        self.client = None
+        self.ble_ota = bo.BleOta()
+        self.print_cb = None
+
         self.rid_counter = 0
         self.verified = False
         self.device_leds = []  # uploaded or downloaded LEDs from device
         self.cmd_file_data = bytearray()
         self.cmd_file_rid = 0
+
+    def log(self, message):
+        message = format_log_message(message, "[ConfigTool]")
+        if self.print_cb:
+            self.print_cb(message)
+        else:
+            print(message)
+
+    def register_print_callback(self, print_cb: Callable[[str], None]):
+        self.print_cb = print_cb
+        self.client.register_print_callback(print_cb)
+        self.chain.register_print_callback(print_cb)
+        self.ble_ota.register_print_callback(print_cb)
 
     async def load_config(self, config_file_path: str) -> bool:
         self.chain.load_config(config_file_path)
@@ -40,22 +57,15 @@ class ConfigTool:
         self.cmd_file_rid = doc["rid"]
 
         self.cmd_file_data = bytearray(json.dumps(doc, separators=(",", ":")) + "\0", "utf-8")
-        print(f"Loaded command file: '{cmd_file_path}' and null-terminated it for BLE transmission.")
+        self.log(f"Loaded command file: '{cmd_file_path}' and null-terminated it for BLE transmission.")
         return True
 
     async def connect(self) -> bool:
-        if not self.client:
-            self.client = bc.BleClient()
         success = await self.client.connect()
-        if not success:
-            self.client = None
         return success
 
     async def disconnect(self) -> bool:
-        success = True
-        if self.client:
-            success = await self.client.disconnect()
-            self.client = None
+        success = await self.client.disconnect()
         return success
 
     async def get_info(self) -> tuple[str, str] | None:
@@ -67,7 +77,7 @@ class ConfigTool:
         response = await self.client.send_command(cmd, timeout=3.0)
         version = cb.CmdBuilder.evaluate_get_version_response(response, rid=self.rid_counter)
         if not version:
-            print("Failed to get device version!")
+            self.log("Failed to get device version!")
             return None
 
         self.rid_counter += 1
@@ -75,12 +85,12 @@ class ConfigTool:
         response = await self.client.send_command(cmd, timeout=3.0)
         name = cb.CmdBuilder.evaluate_get_calibration_name_response(response, rid=self.rid_counter)
         if not name:
-            print("Failed to get device calibration name!")
+            self.log("Failed to get device calibration name!")
             return None
 
-        print("Device info:")
-        print(f"\tFirmware version: '{version}'")
-        print(f"\tCalibration name: '{name}'")
+        self.log("Device info:")
+        self.log(f"\tFirmware version: '{version}'")
+        self.log(f"\tCalibration name: '{name}'")
         return version, name
 
     async def send_cmd(self) -> bool:
@@ -92,9 +102,9 @@ class ConfigTool:
         response = await self.client.send_command(self.cmd_file_data, timeout=3.0)
         success, _ = cb.CmdBuilder._evaluate_response(response, rid=self.cmd_file_rid, status=0)
         if success:
-            print("Command executed successfully on device")
+            self.log("Command executed successfully on device")
         else:
-            print("Command execution failed!")
+            self.log("Command execution failed!")
         return success
 
     async def stop_show(self) -> bool:
@@ -106,9 +116,9 @@ class ConfigTool:
         response = await self.client.send_command(cmd, timeout=3.0)
         status = cb.CmdBuilder.evaluate_stop_show_response(response, rid=self.rid_counter)
         if status:
-            print("Show stopped successfully on device.")
+            self.log("Show stopped successfully on device.")
         else:
-            print("Failed to stop show on device!")
+            self.log("Failed to stop show on device!")
         return status
 
     def _get_changed_leds(self) -> list[dc.Led]:
@@ -128,7 +138,7 @@ class ConfigTool:
             assert led.pcb_index == device_led.pcb_index and led.led_index == device_led.led_index
 
             if led.brightness != device_led.brightness:
-                print(
+                self.log(
                     f"\tLED({led.pcb_index:02d},{led.led_index:02d}) change detected: {device_led.brightness:03d} -> {led.brightness:03d}"
                 )
                 changed_leds.append(led)
@@ -140,24 +150,24 @@ class ConfigTool:
 
         leds = self._get_changed_leds()
         if len(leds) == 0:
-            print("No LED changes detected, skipping upload.")
+            self.log("No LED changes detected, skipping upload.")
             return True
 
-        print(f"Starting upload of {len(leds)} LEDs ...")
+        self.log(f"Starting upload of {len(leds)} LEDs ...")
         self.verified = False  # Reset verified flag on changes
 
         chunk_size = dc.LED_TOTAL // 12
         leds_list = [leds[i : i + chunk_size] for i in range(0, len(leds), chunk_size)]
 
         for i, leds in enumerate(leds_list):
-            print(f"Uploading chunk {i+1}/{len(leds_list)} with {len(leds)} LEDs ...")
+            self.log(f"Uploading chunk {i+1}/{len(leds_list)} with {len(leds)} LEDs ...")
             success = await self._upload_leds(leds)
             if not success:
-                print("Failed to upload LED chunk!")
+                self.log("Failed to upload LED chunk!")
                 self.device_leds = []
                 return False
 
-        print("All LEDs uploaded successfully.")
+        self.log("All LEDs uploaded successfully.")
         self.device_leds = copy.deepcopy(self.chain.leds)  # Store uploaded LEDs for future change detection
         return True
 
@@ -172,11 +182,11 @@ class ConfigTool:
         if not self.chain or not self.client:
             raise RuntimeError("ConfigTool not properly initialized. Call 'load' and 'connect' first!")
 
-        print("Verifying device state against config file ...")
+        self.log("Verifying device state against config file ...")
         self.verified = False
 
         if not await self.download_config():
-            print("Failed to download LEDs for verification!")
+            self.log("Failed to download LEDs for verification!")
             return False
 
         mismatch_count = 0
@@ -187,16 +197,16 @@ class ConfigTool:
                 or led.led_index != expected_led.led_index
                 or led.brightness != expected_led.brightness
             ):
-                print(
+                self.log(
                     f"\tMismatch for LED({led.pcb_index},{led.led_index}): expected {expected_led.brightness}, got {led.brightness}"
                 )
                 mismatch_count += 1
 
         if mismatch_count > 0:
-            print(f"LED verification detected {mismatch_count} mismatche(s)!")
+            self.log(f"LED verification detected {mismatch_count} mismatche(s)!")
             return False
 
-        print("All LEDs verified successfully.")
+        self.log("All LEDs verified successfully.")
         self.verified = True
         return True
 
@@ -204,22 +214,22 @@ class ConfigTool:
         if not self.chain or not self.client:
             raise RuntimeError("ConfigTool not properly initialized. Call 'load' and 'connect' first!")
 
-        print(f"Starting download of {dc.LED_TOTAL} LEDs ...")
+        self.log(f"Starting download of {dc.LED_TOTAL} LEDs ...")
         config_leds = self.chain.leds  # config file LEDs
         chunk_size = dc.LED_TOTAL // 12
         leds_list = [config_leds[i : i + chunk_size] for i in range(0, len(config_leds), chunk_size)]
         downloaded_leds = []
 
         for i, leds in enumerate(leds_list):
-            print(f"Downloading chunk {i+1}/{len(leds_list)} with {len(leds)} LEDs ...")
+            self.log(f"Downloading chunk {i+1}/{len(leds_list)} with {len(leds)} LEDs ...")
             downloaded_chunk = await self._download_leds(leds)
             if not downloaded_chunk:
-                print("Failed to download LED chunk!")
+                self.log("Failed to download LED chunk!")
                 self.device_leds = []
                 return False
             downloaded_leds += downloaded_chunk
 
-        print("All LEDs downloaded successfully.")
+        self.log("All LEDs downloaded successfully.")
         self.device_leds = downloaded_leds  # Store downloaded LEDs for future change detection
         return True
 
@@ -236,7 +246,7 @@ class ConfigTool:
                 "ConfigTool not properly initialized. Call 'load', 'connect', 'upload' and 'verify' first!"
             )
         name = f"{self.chain.name} {datetime.datetime.now():%Y/%m/%d %H:%M}"
-        print(f"Saving calibration on device with name: '{name}' ...")
+        self.log(f"Saving calibration on device with name: '{name}' ...")
 
         self.rid_counter += 1
         cmd = cb.CmdBuilder.save_calibration(rid=self.rid_counter, name=name)
@@ -244,30 +254,28 @@ class ConfigTool:
 
         status = cb.CmdBuilder.evaluate_save_calibration_response(response, rid=self.rid_counter)
         if not status:
-            print("Failed to save calibration on device!")
+            self.log("Failed to save calibration on device!")
             return False
-        print("Calibration saved successfully on device.")
+        self.log("Calibration saved successfully on device.")
         return True
 
     async def upload_ota(self, ota_file_path: str) -> bool:
         if not self.client:
             raise RuntimeError("ConfigTool not properly initialized. Call 'connect' first!")
 
-        print(f"Starting OTA update with file: '{ota_file_path}' ...")
-        success = await perform_ota_update(self.client.client, ota_file_path)
+        self.log(f"Starting OTA update with file: '{ota_file_path}' ...")
+        success = await self.ble_ota.perform_ota_update(self.client.client, ota_file_path)
         if not success:
-            print("OTA update failed!")
+            self.log("OTA update failed!")
         return success
 
 
 async def main():
     config_tool = ConfigTool()
-    await config_tool.load_config("chain_config.json")
 
     await config_tool.connect()
     await config_tool.get_info()
-
-    await config_tool.upload_ota("chain.bin")
+    # await config_tool.upload_ota("chain.bin")
 
     await config_tool.load_config("chain_config.json")
 

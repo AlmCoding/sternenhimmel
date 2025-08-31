@@ -1,7 +1,13 @@
 import json
 import asyncio
 import threading
+from datetime import datetime
 from typing import Any, Dict, List, Union
+
+
+def format_log_message(message: str, tag: str) -> str:
+    timestamp = datetime.now().strftime("%H:%M:%S")
+    return f"[{timestamp}]{tag}: {message}"
 
 
 class AsyncLoopThread:

@@ -1,6 +1,7 @@
 import asyncio
 from bleak import BleakScanner
 from bleak import BleakClient
+from helper import format_log_message
 
 
 # Name of ESP32 BLE device
@@ -19,26 +20,36 @@ class BleClient:
     def __init__(self):
         self.client: BleakClient | None = None
         self.response_buffer = bytearray()
+        self.print_cb = None
 
-    @staticmethod
-    async def scan_for_device(device_name):
-        print("Scanning for BLE devices ...")
+    def log(self, message):
+        message = format_log_message(message, "[BleClient]")
+        if self.print_cb:
+            self.print_cb(message)
+        else:
+            print(message)
+
+    def register_print_callback(self, print_cb):
+        self.print_cb = print_cb
+
+    async def scan_for_device(self, device_name):
+        self.log("Scanning for BLE devices ...")
         devices = await BleakScanner.discover()
         for device in devices:
-            print(f"\t{device}")
+            self.log(f"\t{device}")
             if device.name == device_name:
                 return device
         return None
 
     async def connect(self, device_name=SERVER_DEVICE_NAME) -> bool:
-        target = await BleClient.scan_for_device(device_name)
+        target = await self.scan_for_device(device_name)
         if not target:
             raise RuntimeError(f"BLE device '{device_name}' not found!")
 
-        print(f"Connecting to {target.name} [{target.address}] ...")
+        self.log(f"Connecting to {target.name} [{target.address}] ...")
         self.client = BleakClient(target.address)
         await self.client.connect()
-        print(f"Connected: {bool(self.client.is_connected)}")
+        self.log(f"Connected: {bool(self.client.is_connected)}")
 
         if self.client.is_connected:
             self.response_buffer.clear()
@@ -46,7 +57,7 @@ class BleClient:
             def handle_indication(sender, data: bytearray):
                 # This gets called when an indication arrives.
                 # The OS automatically sends the confirmation back to the ESP32.
-                print(f"Indication from {sender}, data: {data}")
+                self.log(f"Indication from {sender}, data: {data}")
                 self.response_buffer += data
 
             # Subscribe to TX indications (same API as notifications)
@@ -60,7 +71,7 @@ class BleClient:
             await self.client.stop_notify(CHARACTERISTIC_UUID_TX)
             await self.client.disconnect()
             self.client = None
-        print("Disconnected!")
+        self.log("Disconnected!")
         return True
 
     async def send_command(self, command: bytearray, timeout=1.0) -> bytearray:
@@ -68,14 +79,14 @@ class BleClient:
             raise RuntimeError("Not connected to BLE device!")
 
         self.response_buffer.clear()
-        print(f"Sending({len(command)} bytes): {command}")
+        self.log(f"Sending({len(command)} bytes): {command}")
 
         data_list = [command[i : i + NET_MTU] for i in range(0, len(command), NET_MTU)]
         for data in data_list:
             await self.client.write_gatt_char(CHARACTERISTIC_UUID_RX, data, response=True)
 
         # Wait for response
-        print("Waiting for response (timeout = %.1f s) ..." % timeout)
+        self.log("Waiting for response (timeout = %.1f s) ..." % timeout)
         while not b"\0" in self.response_buffer:
             await asyncio.sleep(0.1)
             timeout -= 0.1

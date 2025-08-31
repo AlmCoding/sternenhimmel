@@ -32,6 +32,11 @@ class PrintBuffer:
         return self._buffer.getvalue()
 
 
+def register_print_callback(print_cb):
+    global CONFIG_TOOL
+    CONFIG_TOOL.register_print_callback(print_cb)
+
+
 async def async_connect():
     global CONFIG_TOOL
     status = False

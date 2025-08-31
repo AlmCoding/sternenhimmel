@@ -23,13 +23,14 @@ class ConfigToolApp:
         global FIRMWARE_VERSION
         self.root = root
         self.root.title(f"Config Tool - {FIRMWARE_VERSION}")
-        self.root.geometry("700x500")
-        self.root.minsize(600, 300)
+        self.root.geometry("800x800")
+        self.root.minsize(600, 600)
 
         # Queue for async results
         self.loop = AsyncLoopThread()
         self.result_queue = queue.Queue()
         self.state = self.State()
+        aw.register_print_callback(self.print_callback)
 
         # --- Responsive grid ---
         for col in range(4):
@@ -118,6 +119,9 @@ class ConfigToolApp:
             # Disable all buttons during ongoing action
             self.connect_btn.config(state="disabled")
             self.info_btn.config(state="disabled")
+            # OTA buttons
+            self.ota_browse_btn.config(state="disabled")
+            self.ota_load_btn.config(state="disabled")
             # Config buttons
             self.browse_btn.config(state="disabled")
             self.load_btn.config(state="disabled")
@@ -129,9 +133,6 @@ class ConfigToolApp:
             self.cmd_load_btn.config(state="disabled")
             self.cmd_send_btn.config(state="disabled")
             self.stop_show_btn.config(state="disabled")
-            # OTA buttons
-            self.ota_browse_btn.config(state="disabled")
-            self.ota_load_btn.config(state="disabled")
             return
 
         self.browse_btn.config(state="normal")
@@ -159,11 +160,11 @@ class ConfigToolApp:
             self.connect_btn.config(state="normal", text="Connect")
 
     # --- Logging ---
-    def log(self, message, add_timestamp: bool = True):
+    def log(self, message, add_prefix: bool = True):
         timestamp = datetime.datetime.now().strftime("%H:%M:%S")
         self.log_area.config(state="normal")
-        if add_timestamp:
-            self.log_area.insert(tk.END, f"[{timestamp}] {message}\n")
+        if add_prefix:
+            self.log_area.insert(tk.END, f"[{timestamp}][ConfigToolApp] {message}\n")
         else:
             self.log_area.insert(tk.END, f"{message}\n")
         self.log_area.see(tk.END)
@@ -270,6 +271,9 @@ class ConfigToolApp:
         self.update_buttons(action_ongoing=True)
         self.log("Starting OTA update ...")
 
+    def print_callback(self, message: str):
+        self.result_queue.put(("print", message))
+
     # --- Async result handling ---
     def process_queue(self):
         """Check for results from async tasks"""
@@ -277,12 +281,13 @@ class ConfigToolApp:
             while True:
                 tag, result = self.result_queue.get_nowait()
                 status, message = result if isinstance(result, tuple) else (False, result)
+                update_buttons = True
                 if tag == "connect":
                     self.state.connected = status
                 elif tag == "disconnect":
                     self.state.connected = False
                 elif tag == "get_info":
-                    pass  # No state change needed
+                    pass
                 elif tag == "load_config":
                     self.state.loaded = status
                     self.state.uploaded = False
@@ -301,11 +306,14 @@ class ConfigToolApp:
                     pass
                 elif tag == "ota_update":
                     pass
+                elif tag == "print":
+                    update_buttons = False  # Just a log message, no button update
                 else:
                     raise ValueError(f"Unhandled tag in result queue: {tag}")
 
-                self.update_buttons(action_ongoing=False)
-                self.log(message, add_timestamp=False)
+                if update_buttons:
+                    self.update_buttons(action_ongoing=False)
+                self.log(message, add_prefix=False)
         except queue.Empty:
             pass
         self.root.after(100, self.process_queue)
