@@ -51,15 +51,14 @@ class OtaCallbacks : public NimBLEOtaCallbacks {
   }
 
   void onComplete(NimBLEOta* ota) override {
-    DEBUG_INFO("OTA update complete - restarting in 2 seconds");
-    delay(2000);
-    ESP.restart();
+    DEBUG_INFO("OTA update completed successfully");
+    BleOta::getInstance().complete();
   }
 
   void onError(NimBLEOta* ota, esp_err_t err, NimBLEOta::Reason reason) override {
     DEBUG_INFO("OTA error: %d\n", err);
     if (reason == NimBLEOta::FlashError) {
-      DEBUG_INFO("Flash error, aborting OTA update");
+      DEBUG_INFO("Flash error, aborting OTA update!");
       ota->abortUpdate();
     }
   }
@@ -84,4 +83,18 @@ void BleOta::initialize(NimBLEServer* server) {
   pAdvertising->addServiceUUID(bleOta.getServiceUUID());
 
   DEBUG_INFO("Initialize BLE OTA [OK]");
+}
+
+void BleOta::complete() {
+  complete_ = true;
+  complete_time_ = millis();
+  DEBUG_INFO("BLE OTA marked as complete, device will restart in %u ms", RestartDelay);
+}
+
+void BleOta::run() {
+  if (complete_ == true && (millis() - complete_time_ > RestartDelay)) {
+    DEBUG_INFO("Restarting device after OTA update ...");
+    complete_ = false;
+    ESP.restart();
+  }
 }

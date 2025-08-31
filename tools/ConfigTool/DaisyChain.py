@@ -1,11 +1,15 @@
 import json
 
+
 PCB_COUNT = 60
 LED_COUNT = 12
 LED_TOTAL = PCB_COUNT * LED_COUNT
 MAX_BRIGHTNESS = 100  # Max brightness percentage/level
 
 # For power calculations
+CHAIN_COUNT = 6  # 60 PCBs / 10 PCBs per chain
+WEIGHT_FACTOR = 1.3  # Empirical factor to weight brightness (higher PCB indices => more weight)
+
 CURRENT_SAFETY_MARGIN = 1.10  # Safety margin for current calculations
 MAX_LED_CURRENT_MA = 21  # Max current per LED in mA (Rref=2400 ohm)
 BASE_CURRENT_MA = 25  # Current consumption of idle/dark PCB
@@ -170,8 +174,8 @@ class DaisyChain:
             raise ValueError(f"LEDs length {len(self.leds)} does not match expected {LED_TOTAL}")
 
     def _print_chain_stats(self):
+        global CHAIN_COUNT, LED_TOTAL, WEIGHT_FACTOR
         print("Calculating chain statistics...")
-        CHAIN_COUNT = 6  # 60 PCBs / 10 PCBs per chain
         chain_leds = [[] for _ in range(CHAIN_COUNT)]
 
         for led in self.leds:
@@ -186,7 +190,7 @@ class DaisyChain:
         chain_currents_ma = [0 for _ in range(CHAIN_COUNT)]
         for idx, led in enumerate(chain_leds):
             chain_currents_ma[idx] = sum(
-                (self.linearization_table[led.brightness] / self.range) * MAX_LED_CURRENT_MA for led in led
+                (self.linearization_table[led.brightness] / LINEAR_RANGE) * MAX_LED_CURRENT_MA for led in led
             )
             base_current = BASE_CURRENT_MA * CHAIN_COUNT
             chain_currents_ma[idx] = int(
@@ -206,7 +210,6 @@ class DaisyChain:
             chain_avg_brightness[idx] = int(total_brightness / len(cl))
             print(f"\tChain {idx+1}: {len(cl)} LEDs, Average Brightness: {chain_avg_brightness[idx]}")
 
-        WEIGHT_FACTOR = 1.3  # Empirical factor to weight brightness (higher PCB indices => more weight)
         chain_pcb_weights = [WEIGHT_FACTOR**i for i in range(10)]
         print(f"Using PCB weights: {[f'{w:.3f}' for w in chain_pcb_weights]}")
 

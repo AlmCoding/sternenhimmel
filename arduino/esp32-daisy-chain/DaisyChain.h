@@ -7,29 +7,6 @@
 #include "driver/spi_master.h"
 
 class DaisyChain {
- public:
-  DaisyChain(const DaisyChain&) = delete;
-  DaisyChain& operator=(const DaisyChain&) = delete;
-
-  static DaisyChain& getInstance() {
-    static DaisyChain instance;
-    return instance;
-  }
-
-  void initialize();
-  void get_active_leds(LedObj leds[], size_t size) const;
-  void set_active_leds(LedObj leds[], size_t size);
-  void get_idle_leds(LedObj leds[], size_t size) const;
-  void set_idle_leds(LedObj leds[], size_t size);
-  void load_default_values();
-  void apply_idle_values();
-  void flush_all();
-  void flush_chain(ChainIdx idx, bool force = false);
-  bool save_calibrated_values(const char calibration_name[]);
-  bool delete_calibration_data();
-  const char* get_calibration_name() const;
-
- private:
   constexpr static uint8_t CalibrationFormatVersion = 0;
   constexpr static size_t CalibrationNameMaxLength = 64;
   // HSPI pins
@@ -55,6 +32,29 @@ class DaisyChain {
     53083, 54270, 55469, 56681, 57907, 59145, 60397, 61662, 62940, 64231, 65535,
   };
 
+ public:
+  DaisyChain(const DaisyChain&) = delete;
+  DaisyChain& operator=(const DaisyChain&) = delete;
+
+  static DaisyChain& getInstance() {
+    static DaisyChain instance;
+    return instance;
+  }
+
+  void initialize();
+  void get_active_leds(LedObj leds[], size_t size) const;
+  void set_active_leds(LedObj leds[], size_t size);
+  void get_idle_leds(LedObj leds[], size_t size) const;
+  void set_idle_leds(LedObj leds[], size_t size);
+  void load_default_values();
+  void apply_idle_values();
+  void flush_all();
+  void flush_chain(ChainIdx idx, bool force = false);
+  bool save_calibrated_values(const char calibration_name[]);
+  bool delete_calibration_data();
+  const char* get_calibration_name() const;
+
+ private:
   DaisyChain();
   void select_chain(ChainIdx idx);
   void write_data();

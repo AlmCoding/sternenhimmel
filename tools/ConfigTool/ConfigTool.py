@@ -3,6 +3,7 @@ import CmdBuilder as cb
 import DaisyChain as dc
 import BleClient as bc
 from helper import print_pretty_json
+from nimbleota import perform_ota_update
 import datetime
 import copy
 import json
@@ -18,7 +19,7 @@ class ConfigTool:
         self.cmd_file_data = bytearray()
         self.cmd_file_rid = 0
 
-    async def load(self, config_file_path: str) -> bool:
+    async def load_config(self, config_file_path: str) -> bool:
         self.chain.load_config(config_file_path)
         self.verified = False
         return True
@@ -90,10 +91,11 @@ class ConfigTool:
 
         response = await self.client.send_command(self.cmd_file_data, timeout=3.0)
         success, _ = cb.CmdBuilder._evaluate_response(response, rid=self.cmd_file_rid, status=0)
-        if not success:
+        if success:
+            print("Command executed successfully on device")
+        else:
             print("Command execution failed!")
-            return False
-        return True
+        return success
 
     async def stop_show(self) -> bool:
         if not self.client:
@@ -132,7 +134,7 @@ class ConfigTool:
                 changed_leds.append(led)
         return changed_leds
 
-    async def upload(self) -> bool:
+    async def upload_config(self) -> bool:
         if not self.chain or not self.client:
             raise RuntimeError("ConfigTool not properly initialized. Call 'load' and 'connect' first!")
 
@@ -166,14 +168,14 @@ class ConfigTool:
         status = cb.CmdBuilder.evaluate_set_brightness_response(response, rid=self.rid_counter)
         return status
 
-    async def verify(self) -> bool:
+    async def verify_config(self) -> bool:
         if not self.chain or not self.client:
             raise RuntimeError("ConfigTool not properly initialized. Call 'load' and 'connect' first!")
 
         print("Verifying device state against config file ...")
         self.verified = False
 
-        if not await self.download():
+        if not await self.download_config():
             print("Failed to download LEDs for verification!")
             return False
 
@@ -198,7 +200,7 @@ class ConfigTool:
         self.verified = True
         return True
 
-    async def download(self) -> bool:
+    async def download_config(self) -> bool:
         if not self.chain or not self.client:
             raise RuntimeError("ConfigTool not properly initialized. Call 'load' and 'connect' first!")
 
@@ -228,7 +230,7 @@ class ConfigTool:
         downloaded_leds = cb.CmdBuilder.evaluate_get_brightness_response(response, rid=self.rid_counter)
         return downloaded_leds
 
-    async def save(self) -> bool:
+    async def save_config(self) -> bool:
         if not self.chain or not self.client or not self.verified:
             raise RuntimeError(
                 "ConfigTool not properly initialized. Call 'load', 'connect', 'upload' and 'verify' first!"
@@ -247,17 +249,31 @@ class ConfigTool:
         print("Calibration saved successfully on device.")
         return True
 
+    async def upload_ota(self, ota_file_path: str) -> bool:
+        if not self.client:
+            raise RuntimeError("ConfigTool not properly initialized. Call 'connect' first!")
+
+        print(f"Starting OTA update with file: '{ota_file_path}' ...")
+        success = await perform_ota_update(self.client.client, ota_file_path)
+        if not success:
+            print("OTA update failed!")
+        return success
+
 
 async def main():
     config_tool = ConfigTool()
-    await config_tool.load("chain_config.json")
+    await config_tool.load_config("chain_config.json")
 
     await config_tool.connect()
     await config_tool.get_info()
 
-    if await config_tool.upload():
-        if await config_tool.verify():
-            await config_tool.save()
+    await config_tool.upload_ota("chain.bin")
+
+    await config_tool.load_config("chain_config.json")
+
+    if await config_tool.upload_config():
+        if await config_tool.verify_config():
+            await config_tool.save_config()
             await config_tool.get_info()
 
     await config_tool.disconnect()

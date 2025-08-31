@@ -4,6 +4,11 @@
 #include "common.h"
 
 class Player {
+  constexpr static uint32_t RampStepSizeMin = 1;
+  constexpr static uint32_t RampTickTimeMinMs = 5;
+  constexpr static uint32_t RampTickCountMax = static_cast<uint32_t>(BrgName::MAX) / RampStepSizeMin;
+  constexpr static int RunTogglePin = 38;  // TP1 on pcb
+
  public:
   Player(const Player&) = delete;
   Player& operator=(const Player&) = delete;
@@ -20,11 +25,6 @@ class Player {
   void run();
 
  private:
-  constexpr static uint32_t RampStepSizeMin = 1;
-  constexpr static uint32_t RampTickTimeMinMs = 5;
-  constexpr static uint32_t RampTickCountMax = static_cast<uint32_t>(BrgName::MAX) / RampStepSizeMin;
-  constexpr static int RunTogglePin = 38;  // TP1 on pcb
-
   enum class State {
     IDLE = 0,
     RAMP_DOWN,

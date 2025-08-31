@@ -71,7 +71,7 @@ async def async_load_config(file_path):
     status = False
     with PrintBuffer() as buf:
         try:
-            status = await CONFIG_TOOL.load(file_path)
+            status = await CONFIG_TOOL.load_config(file_path)
         except Exception as e:
             print(f"Error loading config: {e}")
     return status, buf.get_value()
@@ -82,7 +82,7 @@ async def async_upload_config():
     status = False
     with PrintBuffer() as buf:
         try:
-            status = await CONFIG_TOOL.upload()
+            status = await CONFIG_TOOL.upload_config()
         except Exception as e:
             print(f"Error uploading config: {e}")
     return status, buf.get_value()
@@ -93,7 +93,7 @@ async def async_verify_config():
     status = False
     with PrintBuffer() as buf:
         try:
-            status = await CONFIG_TOOL.verify()
+            status = await CONFIG_TOOL.verify_config()
         except Exception as e:
             print(f"Error verifying config: {e}")
     return status, buf.get_value()
@@ -104,7 +104,7 @@ async def async_save_config():
     status = False
     with PrintBuffer() as buf:
         try:
-            status = await CONFIG_TOOL.save()
+            status = await CONFIG_TOOL.save_config()
         except Exception as e:
             print(f"Error saving config: {e}")
     return status, buf.get_value()
@@ -140,4 +140,15 @@ async def async_stop_show():
             status = await CONFIG_TOOL.stop_show()
         except Exception as e:
             print(f"Error stopping sequence: {e}")
+    return status, buf.get_value()
+
+
+async def async_ota_update(file_path):
+    global CONFIG_TOOL
+    status = False
+    with PrintBuffer() as buf:
+        try:
+            status = await CONFIG_TOOL.upload_ota(file_path)
+        except Exception as e:
+            print(f"Error during OTA update: {e}")
     return status, buf.get_value()

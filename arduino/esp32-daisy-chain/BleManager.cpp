@@ -78,12 +78,12 @@ void BleManager::initialize() {
 }
 
 void BleManager::startAdvertising() {
-  DEBUG_INFO("Start advertising BLE services.");
+  DEBUG_INFO("Start advertising BLE services");
   advertising_->start();
 }
 
 void BleManager::stopAdvertising() {
-  DEBUG_INFO("Stop advertising BLE service.");
+  DEBUG_INFO("Stop advertising BLE service");
   advertising_->stop();
 }
 
@@ -189,4 +189,6 @@ void BleManager::run() {
       tx_confirmed_ = false;
     }
   }
+
+  BleOta::getInstance().run();
 }
