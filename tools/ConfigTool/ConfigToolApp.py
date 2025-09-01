@@ -6,7 +6,7 @@ import wrapper as aw
 from helper import AsyncLoopThread
 
 
-FIRMWARE_VERSION = "V0.0.3"
+FIRMWARE_VERSION = "V0.0.4"
 
 
 class ConfigToolApp:
@@ -204,7 +204,7 @@ class ConfigToolApp:
     def load_config(self):
         filepath = self.config_file_path_var.get()
         if not filepath:
-            messagebox.showwarning("Warning", "Please select a file first.")
+            messagebox.showwarning("Warning", "Please select a config file first!")
             return
         fut = self.loop.run_coro(aw.async_load_config(filepath))
         fut.add_done_callback(lambda f: self.result_queue.put(("load_config", f.result())))
@@ -242,7 +242,7 @@ class ConfigToolApp:
     def load_cmd(self):
         filepath = self.cmd_file_path_var.get()
         if not filepath:
-            messagebox.showwarning("Warning", "Please select a sequence file first.")
+            messagebox.showwarning("Warning", "Please select a command file first!")
             return
         fut = self.loop.run_coro(aw.async_load_cmd(filepath))
         fut.add_done_callback(lambda f: self.result_queue.put(("load_cmd", f.result())))
@@ -264,7 +264,7 @@ class ConfigToolApp:
     def ota_update(self):
         filepath = self.ota_file_path_var.get()
         if not filepath:
-            messagebox.showwarning("Warning", "Please select a firmware file first.")
+            messagebox.showwarning("Warning", "Please select a firmware file first!")
             return
         fut = self.loop.run_coro(aw.async_ota_update(filepath))
         fut.add_done_callback(lambda f: self.result_queue.put(("ota_update", f.result())))
@@ -313,7 +313,9 @@ class ConfigToolApp:
                 elif tag == "get_info":
                     pass
                 elif tag == "ota_update":
-                    pass
+                    # After successful OTA, disconnect
+                    if status:
+                        self.toggle_connection()
                 else:
                     raise ValueError(f"Unhandled tag in result queue: {tag}")
 

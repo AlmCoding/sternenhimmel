@@ -167,7 +167,7 @@ class ConfigTool:
                 self.device_leds = []
                 return False
 
-        self.log("All LEDs uploaded successfully.")
+        self.log("All LEDs uploaded (PC=>ESP32) successfully.")
         self.device_leds = copy.deepcopy(self.chain.leds)  # Store uploaded LEDs for future change detection
         return True
 
@@ -229,7 +229,7 @@ class ConfigTool:
                 return False
             downloaded_leds += downloaded_chunk
 
-        self.log("All LEDs downloaded successfully.")
+        self.log("All LEDs downloaded (ESP32=>PC) successfully.")
         self.device_leds = downloaded_leds  # Store downloaded LEDs for future change detection
         return True
 
