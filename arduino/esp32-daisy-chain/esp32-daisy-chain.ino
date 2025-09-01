@@ -6,8 +6,8 @@
 
 #define DEBUG_ENABLE_MAIN 1
 #if ((DEBUG_ENABLE_MAIN == 1) && (ENABLE_DEBUG_OUTPUT == 1))
-#define DEBUG_INFO(f, ...) debug_print("[INF][Main]", f, ##__VA_ARGS__)
-#define DEBUG_ERROR(f, ...) debug_print("[ERR][Main]", f, ##__VA_ARGS__)
+#define DEBUG_INFO(f, ...) debugPrint("[INF][Main]", f, ##__VA_ARGS__)
+#define DEBUG_ERROR(f, ...) debugPrint("[ERR][Main]", f, ##__VA_ARGS__)
 #else
 #define DEBUG_INFO(...)
 #define DEBUG_ERROR(...)
@@ -40,5 +40,5 @@ void loop() {
   Controller::getInstance().run();
 
   Player::getInstance().run();
-  DaisyChain::getInstance().flush_all();
+  DaisyChain::getInstance().flushAll();
 }

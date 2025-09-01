@@ -12,7 +12,7 @@ constexpr char FIRMWARE_VERSION[] = "V0.0.3";
 constexpr char DIVIDER[] = "<=====================================>";
 
 #if ENABLE_DEBUG_OUTPUT == 1
-void debug_print(const char* prefix, const char* fmt, ...);
+void debugPrint(const char* prefix, const char* fmt, ...);
 #endif
 
 #if ENABLE_DEBUG_OUTPUT == 1

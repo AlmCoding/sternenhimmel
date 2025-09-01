@@ -3,8 +3,8 @@
 
 #define DEBUG_ENABLE_PLAYER 1
 #if ((DEBUG_ENABLE_PLAYER == 1) && (ENABLE_DEBUG_OUTPUT == 1))
-#define DEBUG_INFO(f, ...) debug_print("[INF][Player]", f, ##__VA_ARGS__)
-#define DEBUG_ERROR(f, ...) debug_print("[ERR][Player]", f, ##__VA_ARGS__)
+#define DEBUG_INFO(f, ...) debugPrint("[INF][Player]", f, ##__VA_ARGS__)
+#define DEBUG_ERROR(f, ...) debugPrint("[ERR][Player]", f, ##__VA_ARGS__)
 #else
 #define DEBUG_INFO(...)
 #define DEBUG_ERROR(...)
@@ -18,16 +18,16 @@ void Player::initialize() {
   DEBUG_INFO("Initialize Player [OK]");
 }
 
-bool Player::is_idle() const {
+bool Player::isIdle() const {
   return state_ == State::IDLE;
 }
 
 void Player::abort() {
-  DaisyChain::getInstance().apply_idle_values();
+  DaisyChain::getInstance().applyIdleValues();
   state_ = State::IDLE;
 }
 
-void Player::play_sequence(const SequenceStep sequence[], size_t count) {
+void Player::playSequence(const SequenceStep sequence[], size_t count) {
   if (count == 0 || sequence == nullptr) {
     DEBUG_ERROR("Invalid sequence or count!");
     return;
@@ -35,7 +35,7 @@ void Player::play_sequence(const SequenceStep sequence[], size_t count) {
 
   bool invalid_step = false;
   for (size_t i = 0; i < count; i++) {
-    if (is_step_valid(sequence[i]) == false) {
+    if (isStepValid(sequence[i]) == false) {
       DEBUG_ERROR("Invalid sequence step at index %zu!", i);
       invalid_step = true;
       continue;
@@ -57,10 +57,10 @@ void Player::play_sequence(const SequenceStep sequence[], size_t count) {
   sequence_ = const_cast<SequenceStep*>(sequence);
   step_count_ = count;
   step_index_ = 0;
-  play_step(sequence_[step_index_]);
+  playStep(sequence_[step_index_]);
 }
 
-void Player::play_step(const SequenceStep& step) {
+void Player::playStep(const SequenceStep& step) {
   leds_ = step.leds;
   size_ = step.size;
 
@@ -91,7 +91,7 @@ void Player::play_step(const SequenceStep& step) {
   state_ = State::RAMP_DOWN;
 }
 
-bool Player::is_step_valid(const SequenceStep& step) const {
+bool Player::isStepValid(const SequenceStep& step) const {
   if (step.leds == nullptr) {
     DEBUG_ERROR("Invalid leds pointer!");
     return false;
@@ -133,7 +133,7 @@ void Player::run() {
   }
 
   if (state_ == State::RAMP_DOWN) {
-    if (run_ramp_down() == true) {
+    if (runRampDown() == true) {
       state_ = State::PAUSE;
     } else {
       return;
@@ -141,7 +141,7 @@ void Player::run() {
   }
 
   if (state_ == State::PAUSE) {
-    if (run_pause() == true) {
+    if (runPause() == true) {
       state_ = State::RAMP_UP;
     } else {
       return;
@@ -151,7 +151,7 @@ void Player::run() {
   bool return_to_idle = (repetitions_ == 1) && (return_to_idle_ == true);
 
   if (state_ == State::RAMP_UP) {
-    if (run_ramp_up(return_to_idle) == true) {
+    if (runRampUp(return_to_idle) == true) {
       state_ = State::PULSE;
     } else {
       return;
@@ -159,7 +159,7 @@ void Player::run() {
   }
 
   if (state_ == State::PULSE) {
-    if (run_pulse(return_to_idle) == true) {
+    if (runPulse(return_to_idle) == true) {
       repetitions_--;
       if (repetitions_ > 0) {
         state_ = State::RAMP_DOWN;
@@ -168,7 +168,7 @@ void Player::run() {
 
         if (step_index_ < step_count_ - 1) {
           step_index_++;
-          play_step(sequence_[step_index_]);
+          playStep(sequence_[step_index_]);
         } else {
           DEBUG_INFO("All steps of sequence played, returning to IDLE state [OK]");
         }
@@ -179,7 +179,7 @@ void Player::run() {
   }
 }
 
-uint32_t Player::elapsed_time(uint32_t start_ms) const {
+uint32_t Player::elapsedTime(uint32_t start_ms) const {
   uint32_t now_ms = millis();
   if (now_ms < start_ms) {
     return UINT32_MAX - start_ms + now_ms;
@@ -187,7 +187,7 @@ uint32_t Player::elapsed_time(uint32_t start_ms) const {
   return millis() - start_ms;
 }
 
-bool Player::run_ramp_down() {
+bool Player::runRampDown() {
   bool complete = false;
 
   if (ramp_down_.started == false) {
@@ -198,7 +198,7 @@ bool Player::run_ramp_down() {
     }
     // DEBUG_INFO("Start ramp down!");
 
-    DaisyChain::getInstance().get_active_leds(leds_, size_);
+    DaisyChain::getInstance().getActiveLeds(leds_, size_);
     total_ramp_ticks_ = ramp_down_.duration_ms / RampTickTimeMinMs;
 
     if (total_ramp_ticks_ > RampTickCountMax) {
@@ -215,7 +215,7 @@ bool Player::run_ramp_down() {
     ramp_down_.start_ms = millis();
     ramp_down_.started = true;
 
-  } else if (elapsed_time(ramp_down_.start_ms) >= ramp_tick_time_ms_) {
+  } else if (elapsedTime(ramp_down_.start_ms) >= ramp_tick_time_ms_) {
     remaining_ramp_ticks_--;
 
     BrgNumber new_brightness = remaining_ramp_ticks_ * ramp_step_size_;
@@ -224,7 +224,7 @@ bool Player::run_ramp_down() {
         leds_[i].brightness = new_brightness;
       }
     }
-    DaisyChain::getInstance().set_active_leds(leds_, size_);
+    DaisyChain::getInstance().setActiveLeds(leds_, size_);
 
     ramp_down_.start_ms = millis();
 
@@ -238,7 +238,7 @@ bool Player::run_ramp_down() {
   return complete;
 }
 
-bool Player::run_pause() {
+bool Player::runPause() {
   bool complete = false;
 
   if (pause_.started == false) {
@@ -252,12 +252,12 @@ bool Player::run_pause() {
     for (size_t i = 0; i < size_; i++) {
       leds_[i].brightness = static_cast<BrgNumber>(BrgName::OFF);
     }
-    DaisyChain::getInstance().set_active_leds(leds_, size_);
+    DaisyChain::getInstance().setActiveLeds(leds_, size_);
 
     pause_.start_ms = millis();
     pause_.started = true;
 
-  } else if (elapsed_time(pause_.start_ms) >= pause_.duration_ms) {
+  } else if (elapsedTime(pause_.start_ms) >= pause_.duration_ms) {
     pause_.started = false;
     pause_.start_ms = 0;
     complete = true;
@@ -266,7 +266,7 @@ bool Player::run_pause() {
   return complete;
 }
 
-bool Player::run_ramp_up(bool return_to_idle) {
+bool Player::runRampUp(bool return_to_idle) {
   bool complete = false;
 
   if (ramp_up_.started == false) {
@@ -277,7 +277,7 @@ bool Player::run_ramp_up(bool return_to_idle) {
     }
     // DEBUG_INFO("Start ramp up!");
 
-    DaisyChain::getInstance().get_active_leds(leds_, size_);
+    DaisyChain::getInstance().getActiveLeds(leds_, size_);
     total_ramp_ticks_ = ramp_up_.duration_ms / RampTickTimeMinMs;
 
     if (total_ramp_ticks_ > RampTickCountMax) {
@@ -294,13 +294,13 @@ bool Player::run_ramp_up(bool return_to_idle) {
     ramp_up_.start_ms = millis();
     ramp_up_.started = true;
 
-  } else if (elapsed_time(ramp_up_.start_ms) >= ramp_tick_time_ms_) {
+  } else if (elapsedTime(ramp_up_.start_ms) >= ramp_tick_time_ms_) {
     remaining_ramp_ticks_--;
 
     BrgNumber new_brightness = (total_ramp_ticks_ - remaining_ramp_ticks_) * ramp_step_size_;
     for (size_t i = 0; i < size_; i++) {
       if (return_to_idle == true) {
-        DaisyChain::getInstance().get_idle_leds(leds_ + i, 1);
+        DaisyChain::getInstance().getIdleLeds(leds_ + i, 1);
         if (new_brightness < leds_[i].brightness) {
           // Set new brightness because it is less than idle value
           leds_[i].brightness = new_brightness;
@@ -309,7 +309,7 @@ bool Player::run_ramp_up(bool return_to_idle) {
         leds_[i].brightness = new_brightness;
       }
     }
-    DaisyChain::getInstance().set_active_leds(leds_, size_);
+    DaisyChain::getInstance().setActiveLeds(leds_, size_);
 
     ramp_up_.start_ms = millis();
 
@@ -323,7 +323,7 @@ bool Player::run_ramp_up(bool return_to_idle) {
   return complete;
 }
 
-bool Player::run_pulse(bool return_to_idle) {
+bool Player::runPulse(bool return_to_idle) {
   bool complete = false;
 
   if (pulse_.started == false) {
@@ -336,19 +336,19 @@ bool Player::run_pulse(bool return_to_idle) {
     // DEBUG_INFO("Start pulse!");
     if (return_to_idle == true) {
       // Set all LEDs to idle brightness
-      DaisyChain::getInstance().get_idle_leds(leds_, size_);
+      DaisyChain::getInstance().getIdleLeds(leds_, size_);
     } else {
       // Set all LEDs to maximum brightness
       for (size_t i = 0; i < size_; i++) {
         leds_[i].brightness = static_cast<BrgNumber>(BrgName::MAX);
       }
     }
-    DaisyChain::getInstance().set_active_leds(leds_, size_);
+    DaisyChain::getInstance().setActiveLeds(leds_, size_);
 
     pulse_.start_ms = millis();
     pulse_.started = true;
 
-  } else if (elapsed_time(pulse_.start_ms) >= pulse_.duration_ms) {
+  } else if (elapsedTime(pulse_.start_ms) >= pulse_.duration_ms) {
     pulse_.started = false;
     pulse_.start_ms = 0;
     complete = true;

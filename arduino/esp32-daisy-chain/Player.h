@@ -19,9 +19,9 @@ class Player {
   }
 
   void initialize();
-  bool is_idle() const;
+  bool isIdle() const;
   void abort();
-  void play_sequence(const SequenceStep sequence[], size_t count);
+  void playSequence(const SequenceStep sequence[], size_t count);
   void run();
 
  private:
@@ -40,13 +40,13 @@ class Player {
   };
 
   Player() = default;
-  void play_step(const SequenceStep& step);
-  bool is_step_valid(const SequenceStep& step) const;
-  uint32_t elapsed_time(uint32_t start_ms) const;
-  bool run_ramp_down();
-  bool run_pause();
-  bool run_ramp_up(bool return_to_idle);
-  bool run_pulse(bool return_to_idle);
+  void playStep(const SequenceStep& step);
+  bool isStepValid(const SequenceStep& step) const;
+  uint32_t elapsedTime(uint32_t start_ms) const;
+  bool runRampDown();
+  bool runPause();
+  bool runRampUp(bool return_to_idle);
+  bool runPulse(bool return_to_idle);
 
   State state_ = State::IDLE;
   uint32_t last_run_ms_ = 0;

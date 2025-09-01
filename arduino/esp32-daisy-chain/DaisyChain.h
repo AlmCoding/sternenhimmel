@@ -42,25 +42,25 @@ class DaisyChain {
   }
 
   void initialize();
-  void get_active_leds(LedObj leds[], size_t size) const;
-  void set_active_leds(LedObj leds[], size_t size);
-  void get_idle_leds(LedObj leds[], size_t size) const;
-  void set_idle_leds(LedObj leds[], size_t size);
-  void load_default_values();
-  void apply_idle_values();
-  void flush_all();
-  void flush_chain(ChainIdx idx, bool force = false);
-  bool save_calibrated_values(const char calibration_name[]);
-  bool delete_calibration_data();
-  const char* get_calibration_name() const;
+  void getActiveLeds(LedObj leds[], size_t size) const;
+  void setActiveLeds(LedObj leds[], size_t size);
+  void getIdleLeds(LedObj leds[], size_t size) const;
+  void setIdleLeds(LedObj leds[], size_t size);
+  void loadDefaultValues();
+  void applyIdleValues();
+  void flushAll();
+  void flushChain(ChainIdx idx, bool force = false);
+  bool saveCalibratedValues(const char calibration_name[]);
+  bool deleteCalibrationData();
+  const char* getCalibrationName() const;
 
  private:
   DaisyChain();
-  void select_chain(ChainIdx idx);
-  void write_data();
-  bool load_calibrated_values();
-  bool migrate_calibration_data(uint8_t from_version);
-  uint16_t linearize_brightness(BrgNumber brightness);
+  void selectChain(ChainIdx idx);
+  void writeData();
+  bool loadCalibratedValues();
+  bool migrateCalibrationData(uint8_t from_version);
+  uint16_t linearizeBrightness(BrgNumber brightness);
 
   BrgNumber active_brightness0_[CHAIN_SIZE][LED_COUNT];
   BrgNumber active_brightness1_[CHAIN_SIZE][LED_COUNT];

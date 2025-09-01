@@ -4,8 +4,8 @@
 
 #define DEBUG_ENABLE_BLEMANAGER 1
 #if ((DEBUG_ENABLE_BLEMANAGER == 1) && (ENABLE_DEBUG_OUTPUT == 1))
-#define DEBUG_INFO(f, ...) debug_print("[INF][BleMgr]", f, ##__VA_ARGS__)
-#define DEBUG_ERROR(f, ...) debug_print("[ERR][BleMgr]", f, ##__VA_ARGS__)
+#define DEBUG_INFO(f, ...) debugPrint("[INF][BleMgr]", f, ##__VA_ARGS__)
+#define DEBUG_ERROR(f, ...) debugPrint("[ERR][BleMgr]", f, ##__VA_ARGS__)
 #else
 #define DEBUG_INFO(...)
 #define DEBUG_ERROR(...)

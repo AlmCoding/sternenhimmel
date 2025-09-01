@@ -5,8 +5,8 @@
 
 #define DEBUG_ENABLE_CONTROLLER 1
 #if ((DEBUG_ENABLE_CONTROLLER == 1) && (ENABLE_DEBUG_OUTPUT == 1))
-#define DEBUG_INFO(f, ...) debug_print("[INF][Ctrl]", f, ##__VA_ARGS__)
-#define DEBUG_ERROR(f, ...) debug_print("[ERR][Ctrl]", f, ##__VA_ARGS__)
+#define DEBUG_INFO(f, ...) debugPrint("[INF][Ctrl]", f, ##__VA_ARGS__)
+#define DEBUG_ERROR(f, ...) debugPrint("[ERR][Ctrl]", f, ##__VA_ARGS__)
 #else
 #define DEBUG_INFO(...)
 #define DEBUG_ERROR(...)
@@ -134,7 +134,7 @@ void Controller::handleGetVersion() {
 void Controller::handleGetCalibrationName() {
   DEBUG_INFO("CMD: '%s' [...]", CMD_GET_VERSION);
 
-  const char* name = DaisyChain::getInstance().get_calibration_name();
+  const char* name = DaisyChain::getInstance().getCalibrationName();
   ASSERT(name != nullptr);
 
   sendStatusResponse(0, KEY_NAME, "%s", name);
@@ -144,9 +144,9 @@ void Controller::handleGetCalibrationName() {
 void Controller::handleDeleteCalibration() {
   DEBUG_INFO("CMD: '%s' [...]", CMD_DELETE_CALIBRATION);
 
-  DaisyChain::getInstance().delete_calibration_data();
-  DaisyChain::getInstance().load_default_values();
-  DaisyChain::getInstance().apply_idle_values();
+  DaisyChain::getInstance().deleteCalibrationData();
+  DaisyChain::getInstance().loadDefaultValues();
+  DaisyChain::getInstance().applyIdleValues();
 
   sendStatusResponse(0, "", "");
   DEBUG_INFO("CMD: '%s' [OK]", CMD_DELETE_CALIBRATION);
@@ -161,7 +161,7 @@ void Controller::handleSaveCalibration() {
   }
 
   const char* name = rx_json_doc_[KEY_NAME];
-  DaisyChain::getInstance().save_calibrated_values(name);
+  DaisyChain::getInstance().saveCalibratedValues(name);
 
   sendStatusResponse(0, "", "");
   DEBUG_INFO("CMD: '%s' [OK]", CMD_SAVE_CALIBRATION);
@@ -189,9 +189,9 @@ void Controller::handleSetBrightness() {
       sendStatusResponse(-1, KEY_MSG, "Invalid LED object: [%u, %u, %u]", pcb_idx, led_idx, brightness);
       return;
     }
-    DaisyChain::getInstance().set_idle_leds(&obj, 1);
+    DaisyChain::getInstance().setIdleLeds(&obj, 1);
   }
-  DaisyChain::getInstance().apply_idle_values();
+  DaisyChain::getInstance().applyIdleValues();
 
   sendStatusResponse(0, "", "");
   DEBUG_INFO("CMD: '%s' [OK]", CMD_SET_BRIGHTNESS);
@@ -219,7 +219,7 @@ void Controller::handleGetBrightness() {
       sendStatusResponse(-1, KEY_MSG, "Invalid LED object: [%u, %u]", pcb_idx, led_idx);
       return;
     }
-    DaisyChain::getInstance().get_idle_leds(&obj, 1);
+    DaisyChain::getInstance().getIdleLeds(&obj, 1);
     JsonArray resp_led = response_leds.createNestedArray();
     resp_led.add(pcb_idx);
     resp_led.add(led_idx);
@@ -254,7 +254,7 @@ void Controller::handlePlayShow() {
     return;
   }
 
-  if (Player::getInstance().is_idle() == false) {
+  if (Player::getInstance().isIdle() == false) {
     if (rx_json_doc_[KEY_FORCE] == 0) {
       sendStatusResponse(-1, KEY_MSG, "Another show is already playing!");
       return;
@@ -270,7 +270,7 @@ void Controller::handlePlayShow() {
     return;
   }
 
-  Player::getInstance().play_sequence(sequence_, sequence_length_);
+  Player::getInstance().playSequence(sequence_, sequence_length_);
   sendStatusResponse(0, "", "");
   DEBUG_INFO("CMD: '%s' [OK]", CMD_PLAY);
 }

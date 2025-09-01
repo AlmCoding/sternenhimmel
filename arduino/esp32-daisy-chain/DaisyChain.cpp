@@ -3,8 +3,8 @@
 
 #define DEBUG_ENABLE_DAISYCHAIN 1
 #if ((DEBUG_ENABLE_DAISYCHAIN == 1) && (ENABLE_DEBUG_OUTPUT == 1))
-#define DEBUG_INFO(f, ...) debug_print("[INF][Chain]", f, ##__VA_ARGS__)
-#define DEBUG_ERROR(f, ...) debug_print("[ERR][Chain]", f, ##__VA_ARGS__)
+#define DEBUG_INFO(f, ...) debugPrint("[INF][Chain]", f, ##__VA_ARGS__)
+#define DEBUG_ERROR(f, ...) debugPrint("[ERR][Chain]", f, ##__VA_ARGS__)
 #else
 #define DEBUG_INFO(...)
 #define DEBUG_ERROR(...)
@@ -47,19 +47,19 @@ void DaisyChain::initialize() {
   digitalWrite(Chain5SelectPin, HIGH);
 
   chain_.init();
-  write_data();
+  writeData();
 
-  if (load_calibrated_values() == false) {
+  if (loadCalibratedValues() == false) {
     DEBUG_ERROR("Calibrated values not found!");
-    load_default_values();
+    loadDefaultValues();
   }
-  apply_idle_values();
+  applyIdleValues();
 
-  flush_all();
+  flushAll();
   DEBUG_INFO("Initialize DaisyChain [OK]");
 }
 
-bool DaisyChain::load_calibrated_values() {
+bool DaisyChain::loadCalibratedValues() {
   /* NVS storage layout:
    * "calibration" namespace:
    * - "format_version" (uint8_t)
@@ -82,7 +82,7 @@ bool DaisyChain::load_calibrated_values() {
   if (format_version != CalibrationFormatVersion) {
     preferences.end();
     DEBUG_INFO("Calibration format version mismatch, migrating data ...");
-    return migrate_calibration_data(format_version);
+    return migrateCalibrationData(format_version);
   }
 
   // Check if all keys are present
@@ -129,12 +129,12 @@ bool DaisyChain::load_calibrated_values() {
   return true;
 }
 
-bool DaisyChain::migrate_calibration_data(uint8_t from_version) {
+bool DaisyChain::migrateCalibrationData(uint8_t from_version) {
   // No migration needed for now
   return false;
 }
 
-bool DaisyChain::save_calibrated_values(const char calibration_name[]) {
+bool DaisyChain::saveCalibratedValues(const char calibration_name[]) {
   if (calibration_name == nullptr || strnlen(calibration_name, sizeof(calibration_name_)) > CalibrationNameMaxLength) {
     DEBUG_ERROR("Invalid calibration name!");
     return false;
@@ -160,7 +160,7 @@ bool DaisyChain::save_calibrated_values(const char calibration_name[]) {
   return true;
 }
 
-bool DaisyChain::delete_calibration_data() {
+bool DaisyChain::deleteCalibrationData() {
   Preferences preferences;
   preferences.begin("calibration", false);  // open (create if needed) the namespace in RW mode
   preferences.clear();                      // clears all keys in "calibration"
@@ -168,11 +168,11 @@ bool DaisyChain::delete_calibration_data() {
   return true;
 }
 
-const char* DaisyChain::get_calibration_name() const {
+const char* DaisyChain::getCalibrationName() const {
   return calibration_name_;
 }
 
-void DaisyChain::load_default_values() {
+void DaisyChain::loadDefaultValues() {
   memset(idle_brightness0_, 0, sizeof(idle_brightness0_));
   memset(idle_brightness1_, 0, sizeof(idle_brightness1_));
   memset(idle_brightness2_, 0, sizeof(idle_brightness2_));
@@ -181,7 +181,7 @@ void DaisyChain::load_default_values() {
   memset(idle_brightness5_, 0, sizeof(idle_brightness5_));
 }
 
-void DaisyChain::apply_idle_values() {
+void DaisyChain::applyIdleValues() {
   memcpy(active_brightness0_, idle_brightness0_, sizeof(active_brightness0_));
   memcpy(active_brightness1_, idle_brightness1_, sizeof(active_brightness1_));
   memcpy(active_brightness2_, idle_brightness2_, sizeof(active_brightness2_));
@@ -196,16 +196,16 @@ void DaisyChain::apply_idle_values() {
   chain5_changed_ = true;
 }
 
-void DaisyChain::flush_all() {
-  flush_chain(ChainIdx::CHAIN_0);
-  flush_chain(ChainIdx::CHAIN_1);
-  flush_chain(ChainIdx::CHAIN_2);
-  flush_chain(ChainIdx::CHAIN_3);
-  flush_chain(ChainIdx::CHAIN_4);
-  flush_chain(ChainIdx::CHAIN_5);
+void DaisyChain::flushAll() {
+  flushChain(ChainIdx::CHAIN_0);
+  flushChain(ChainIdx::CHAIN_1);
+  flushChain(ChainIdx::CHAIN_2);
+  flushChain(ChainIdx::CHAIN_3);
+  flushChain(ChainIdx::CHAIN_4);
+  flushChain(ChainIdx::CHAIN_5);
 }
 
-void DaisyChain::flush_chain(ChainIdx idx, bool force) {
+void DaisyChain::flushChain(ChainIdx idx, bool force) {
   BrgNumber(*current_brightness)[CHAIN_SIZE][LED_COUNT] = nullptr;
 
   switch (idx) {
@@ -261,20 +261,20 @@ void DaisyChain::flush_chain(ChainIdx idx, bool force) {
     uint16_t tlc_idx_inv = CHAIN_SIZE - tlc_idx - 1;
 
     for (uint8_t led_idx = 0; led_idx < (LED_COUNT / 3); led_idx++) {  // LED index is [0, 1, 2, 3]
-      uint16_t ch_r = linearize_brightness((*current_brightness)[tlc_idx][led_idx * 3]);
-      uint16_t ch_g = linearize_brightness((*current_brightness)[tlc_idx][led_idx * 3 + 1]);
-      uint16_t ch_b = linearize_brightness((*current_brightness)[tlc_idx][led_idx * 3 + 2]);
+      uint16_t ch_r = linearizeBrightness((*current_brightness)[tlc_idx][led_idx * 3]);
+      uint16_t ch_g = linearizeBrightness((*current_brightness)[tlc_idx][led_idx * 3 + 1]);
+      uint16_t ch_b = linearizeBrightness((*current_brightness)[tlc_idx][led_idx * 3 + 2]);
 
       uint8_t led_idx_inv = (LED_COUNT / 3 - 1) - led_idx;        // Invert led index to match physical wiring/naming
       chain_.setLed(tlc_idx_inv, led_idx_inv, ch_b, ch_g, ch_r);  // Note the order: B, G, R
     }
   }
 
-  select_chain(idx);
-  write_data();
+  selectChain(idx);
+  writeData();
 }
 
-void DaisyChain::select_chain(ChainIdx idx) {
+void DaisyChain::selectChain(ChainIdx idx) {
   digitalWrite(Chain0SelectPin, LOW);
   digitalWrite(Chain1SelectPin, LOW);
   digitalWrite(Chain2SelectPin, LOW);
@@ -306,7 +306,7 @@ void DaisyChain::select_chain(ChainIdx idx) {
   }
 }
 
-void DaisyChain::write_data() {
+void DaisyChain::writeData() {
   // Send data using DMA
   spi_transaction_t trans = {};
   trans.length = chain_.getChainBufferSize() * 8;
@@ -316,11 +316,11 @@ void DaisyChain::write_data() {
   ESP_ERROR_CHECK(spi_device_transmit(spi_, &trans));
 }
 
-uint16_t DaisyChain::linearize_brightness(BrgNumber brightness) {
+uint16_t DaisyChain::linearizeBrightness(BrgNumber brightness) {
   return BRIGHTNESS_LINEARIZATION_TABLE[static_cast<int>(brightness)];
 }
 
-void DaisyChain::get_active_leds(LedObj leds[], size_t size) const {
+void DaisyChain::getActiveLeds(LedObj leds[], size_t size) const {
   for (size_t i = 0; i < size; i++) {
     ChainIdx chain_idx = leds[i].chain_idx;
     uint8_t pcb_idx = leds[i].pcb_idx;
@@ -351,7 +351,7 @@ void DaisyChain::get_active_leds(LedObj leds[], size_t size) const {
   }
 }
 
-void DaisyChain::set_active_leds(LedObj leds[], size_t size) {
+void DaisyChain::setActiveLeds(LedObj leds[], size_t size) {
   for (size_t i = 0; i < size; i++) {
     ChainIdx chain_idx = leds[i].chain_idx;
     uint8_t pcb_idx = leds[i].pcb_idx;
@@ -389,7 +389,7 @@ void DaisyChain::set_active_leds(LedObj leds[], size_t size) {
   }
 }
 
-void DaisyChain::get_idle_leds(LedObj leds[], size_t size) const {
+void DaisyChain::getIdleLeds(LedObj leds[], size_t size) const {
   for (size_t i = 0; i < size; i++) {
     ChainIdx chain_idx = leds[i].chain_idx;
     uint8_t pcb_idx = leds[i].pcb_idx;
@@ -420,7 +420,7 @@ void DaisyChain::get_idle_leds(LedObj leds[], size_t size) const {
   }
 }
 
-void DaisyChain::set_idle_leds(LedObj leds[], size_t size) {
+void DaisyChain::setIdleLeds(LedObj leds[], size_t size) {
   for (size_t i = 0; i < size; i++) {
     ChainIdx chain_idx = leds[i].chain_idx;
     uint8_t pcb_idx = leds[i].pcb_idx;

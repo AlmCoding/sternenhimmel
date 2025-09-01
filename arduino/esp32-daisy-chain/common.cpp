@@ -1,6 +1,6 @@
 #include "common.h"
 
-void debug_print(const char* prefix, const char* fmt, ...) {
+void debugPrint(const char* prefix, const char* fmt, ...) {
   uint32_t ms = (uint32_t)millis();
   uint32_t sec = (ms / 1000) & 0x0F;  // wrap seconds 0..15
   uint16_t msec = ms % 1000;
