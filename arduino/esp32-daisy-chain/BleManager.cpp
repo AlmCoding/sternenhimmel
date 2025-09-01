@@ -73,7 +73,7 @@ void BleManager::initialize() {
   advertising_->enableScanResponse(true);
   startAdvertising();
 
-  DEBUG_INFO("BLE device: '%s':%s", DEVICE_NAME, NimBLEDevice::getAddress().toString().c_str());
+  DEBUG_INFO("BLE device: '%s', %s", DEVICE_NAME, NimBLEDevice::getAddress().toString().c_str());
   DEBUG_INFO("Initialize BLE Manager [OK]");
 }
 

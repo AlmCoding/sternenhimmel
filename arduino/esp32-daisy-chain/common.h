@@ -8,7 +8,7 @@
 #include <Arduino.h>
 
 #define ENABLE_DEBUG_OUTPUT 1
-constexpr char FIRMWARE_VERSION[] = "V0.0.3";
+constexpr char FIRMWARE_VERSION[] = "V0.0.4";
 constexpr char DIVIDER[] = "<=====================================>";
 
 #if ENABLE_DEBUG_OUTPUT == 1
@@ -78,5 +78,9 @@ enum class BrgName : BrgNumber {
   OFF = 0,
   MAX = 100,
 };
+
+constexpr size_t SystemIdMaxLength = 64;
+const char* getSystemId();
+void setSystemId(const char* identifier);
 
 #endif  // CHAIN_CONFIG_H

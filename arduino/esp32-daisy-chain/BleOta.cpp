@@ -73,7 +73,7 @@ void BleOta::initialize(NimBLEServer* server) {
   bleDis.setFirmwareRevision(FIRMWARE_VERSION);
   bleDis.setHardwareRevision("V0.1");
   // bleDis.setSoftwareRevision("1.0.0");
-  // bleDis.setSystemId("1.0.0");
+  // bleDis.setSystemId(getSystemId());
   // bleDis.setPnp(0x01, 0x02, 0x03, 0x04);
 
   bleDis.start();

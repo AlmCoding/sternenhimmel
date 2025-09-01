@@ -22,6 +22,7 @@ void setup() {
   DEBUG_INFO("%s", DIVIDER);
   DEBUG_INFO("Setup ESP32-daisy-chain [...]");
   DEBUG_INFO("Firmware version: %s", FIRMWARE_VERSION);
+  DEBUG_INFO("System id: '%s'", getSystemId());
   DEBUG_INFO("Free heap: %u bytes", ESP.getFreeHeap());
   DEBUG_INFO("CPU frequency: %d MHz", getCpuFrequencyMhz());
   sleep(0.25);

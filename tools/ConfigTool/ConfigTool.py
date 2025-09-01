@@ -68,30 +68,54 @@ class ConfigTool:
         success = await self.client.disconnect()
         return success
 
-    async def get_info(self) -> tuple[str, str] | None:
+    async def get_info(self) -> tuple[str, str, str] | None:
         if not self.client:
             raise RuntimeError("ConfigTool not properly initialized. Call 'connect' first!")
 
         self.rid_counter += 1
         cmd = cb.CmdBuilder.get_version(rid=self.rid_counter)
-        response = await self.client.send_command(cmd, timeout=3.0)
+        response = await self.client.send_command(cmd, timeout=2.0)
         version = cb.CmdBuilder.evaluate_get_version_response(response, rid=self.rid_counter)
         if not version:
-            self.log("Failed to get device version!")
+            self.log("Failed to get firmware version!")
             return None
 
         self.rid_counter += 1
+        cmd = cb.CmdBuilder.get_system_id(rid=self.rid_counter)
+        response = await self.client.send_command(cmd, timeout=2.0)
+        system_id = cb.CmdBuilder.evaluate_get_system_id_response(response, rid=self.rid_counter)
+        if not system_id:
+            self.log("Failed to get system id!")
+
+        self.rid_counter += 1
         cmd = cb.CmdBuilder.get_calibration_name(rid=self.rid_counter)
-        response = await self.client.send_command(cmd, timeout=3.0)
+        response = await self.client.send_command(cmd, timeout=2.0)
         name = cb.CmdBuilder.evaluate_get_calibration_name_response(response, rid=self.rid_counter)
         if not name:
-            self.log("Failed to get device calibration name!")
+            self.log("Failed to get calibration name!")
             return None
 
         self.log("Device info:")
         self.log(f"\tFirmware version: '{version}'")
-        self.log(f"\tCalibration name: '{name}'")
-        return version, name
+        self.log(f"\tSystem id: '{system_id}'")
+        self.log(f"\tConfig name: '{name}'")
+        return version, system_id, name
+
+    async def set_system_id(self, system_id: str) -> bool:
+        if not self.client:
+            raise RuntimeError("ConfigTool not properly initialized. Call 'connect' first!")
+        if not system_id:
+            raise ValueError("System ID must be a non-empty string!")
+
+        self.rid_counter += 1
+        cmd = cb.CmdBuilder.set_system_id(rid=self.rid_counter, system_id=system_id)
+        response = await self.client.send_command(cmd, timeout=2.0)
+        status = cb.CmdBuilder.evaluate_set_system_id_response(response, rid=self.rid_counter)
+        if status:
+            self.log(f"System ID successfully set to '{system_id}' on device.")
+        else:
+            self.log("Failed to set System ID on device!")
+        return status
 
     async def send_cmd(self) -> bool:
         if not self.client:
@@ -99,7 +123,7 @@ class ConfigTool:
         if len(self.cmd_file_data) == 0:
             raise RuntimeError("No command loaded. Call 'load_cmd' first!")
 
-        response = await self.client.send_command(self.cmd_file_data, timeout=3.0)
+        response = await self.client.send_command(self.cmd_file_data, timeout=2.0)
         success, _ = cb.CmdBuilder._evaluate_response(response, rid=self.cmd_file_rid, status=0)
         if success:
             self.log("Command executed successfully on device")
@@ -113,7 +137,7 @@ class ConfigTool:
 
         self.rid_counter += 1
         cmd = cb.CmdBuilder.stop_show(rid=self.rid_counter)
-        response = await self.client.send_command(cmd, timeout=3.0)
+        response = await self.client.send_command(cmd, timeout=2.0)
         status = cb.CmdBuilder.evaluate_stop_show_response(response, rid=self.rid_counter)
         if status:
             self.log("Show stopped successfully on device.")
@@ -174,7 +198,7 @@ class ConfigTool:
     async def _upload_leds(self, leds: list[dc.Led]) -> bool:
         self.rid_counter += 1
         cmd = cb.CmdBuilder.set_brightness(rid=self.rid_counter, leds=leds)
-        response = await self.client.send_command(cmd, timeout=5.0)
+        response = await self.client.send_command(cmd, timeout=3.0)
         status = cb.CmdBuilder.evaluate_set_brightness_response(response, rid=self.rid_counter)
         return status
 
@@ -236,7 +260,7 @@ class ConfigTool:
     async def _download_leds(self, leds: list[dc.Led]) -> list[dc.Led] | None:
         self.rid_counter += 1
         cmd = cb.CmdBuilder.get_brightness(rid=self.rid_counter, leds=leds)
-        response = await self.client.send_command(cmd, timeout=5.0)
+        response = await self.client.send_command(cmd, timeout=3.0)
         downloaded_leds = cb.CmdBuilder.evaluate_get_brightness_response(response, rid=self.rid_counter)
         return downloaded_leds
 

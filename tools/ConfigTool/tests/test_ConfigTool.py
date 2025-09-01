@@ -2,6 +2,7 @@ import pytest_asyncio
 import pytest
 import asyncio
 import json
+import re
 import CmdBuilder as cb
 import DaisyChain as dc
 import BleClient as bc
@@ -58,7 +59,27 @@ class TestCmdBuilder:
 
         # Send command and evaluate response
         response = await ble_client.send_command(cmd, timeout=2.0)
-        assert cb.CmdBuilder.evaluate_get_version_response(response, rid=1) == "V0.0.1"
+        version = cb.CmdBuilder.evaluate_get_version_response(response, rid=1)
+        assert re.fullmatch(r"V\d+\.\d+\.\d+", version)
+
+    @pytest.mark.asyncio
+    async def test_get_system_id(self, ble_client):
+        cmd = cb.CmdBuilder.get_system_id(rid=11)
+        assert cmd == bytearray(b'{"rid":11,"cmd":"get_system_id"}\0')
+
+        # Send command and evaluate response
+        response = await ble_client.send_command(cmd, timeout=2.0)
+        system_id = cb.CmdBuilder.evaluate_get_system_id_response(response, rid=11)
+        assert isinstance(system_id, str) and len(system_id) > 0
+
+    @pytest.mark.asyncio
+    async def test_set_system_id(self, ble_client):
+        cmd = cb.CmdBuilder.set_system_id(rid=12, system_id="Who is John Galt?")
+        assert cmd == bytearray(b'{"rid":12,"cmd":"set_system_id","system_id":"Who is John Galt?"}\0')
+
+        # Send command and evaluate response
+        response = await ble_client.send_command(cmd, timeout=2.0)
+        assert cb.CmdBuilder.evaluate_set_system_id_response(response, rid=12) == True
 
     @pytest.mark.asyncio
     async def test_get_calibration_name(self, ble_client):
@@ -66,7 +87,7 @@ class TestCmdBuilder:
         assert cmd == bytearray(b'{"rid":2,"cmd":"get_calibration_name"}\0')
 
         # Send command and evaluate response
-        response = await ble_client.send_command(cmd, timeout=3.0)
+        response = await ble_client.send_command(cmd, timeout=2.0)
         name = cb.CmdBuilder.evaluate_get_calibration_name_response(response, rid=2)
         assert isinstance(name, str) and len(name) > 0
 

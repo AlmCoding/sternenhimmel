@@ -23,8 +23,11 @@ class Controller {
   constexpr static char KEY_MSG[] = "msg";
   constexpr static char KEY_STATUS[] = "status";
   constexpr static char KEY_VERSION[] = "version";
+  constexpr static char KEY_SYSTEM_ID[] = "system_id";
 
   constexpr static char CMD_GET_VERSION[] = "get_version";
+  constexpr static char CMD_GET_SYSTEM_ID[] = "get_system_id";
+  constexpr static char CMD_SET_SYSTEM_ID[] = "set_system_id";
   constexpr static char CMD_GET_CALIBRATION_NAME[] = "get_calibration_name";
   constexpr static char CMD_DELETE_CALIBRATION[] = "delete_calibration";
   constexpr static char CMD_SAVE_CALIBRATION[] = "save_calibration";
@@ -58,6 +61,8 @@ class Controller {
   void processReceivedData();
 
   void handleGetVersion();
+  void handleGetSystemId();
+  void handleSetSystemId();
   void handleGetCalibrationName();
   void handleDeleteCalibration();
   void handleSaveCalibration();

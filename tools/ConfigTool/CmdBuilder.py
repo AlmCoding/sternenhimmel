@@ -58,6 +58,35 @@ class CmdBuilder:
         return version
 
     @staticmethod
+    def get_system_id(rid: int):
+        doc = {
+            "rid": rid,
+            "cmd": "get_system_id",
+        }
+        json_bytes = bytearray(json.dumps(doc, separators=(",", ":")) + "\0", "utf-8")
+        return json_bytes
+
+    @staticmethod
+    def evaluate_get_system_id_response(response: bytearray, rid: int) -> str | None:
+        _, system_id = CmdBuilder._evaluate_response(response, rid=rid, status=0, system_id=str)
+        return system_id
+
+    @staticmethod
+    def set_system_id(rid: int, system_id: str):
+        doc = {
+            "rid": rid,
+            "cmd": "set_system_id",
+            "system_id": system_id,
+        }
+        json_bytes = bytearray(json.dumps(doc, separators=(",", ":")) + "\0", "utf-8")
+        return json_bytes
+
+    @staticmethod
+    def evaluate_set_system_id_response(response: bytearray, rid: int) -> bool:
+        success, _ = CmdBuilder._evaluate_response(response, rid=rid, status=0)
+        return success
+
+    @staticmethod
     def get_calibration_name(rid: int):
         doc = {
             "rid": rid,

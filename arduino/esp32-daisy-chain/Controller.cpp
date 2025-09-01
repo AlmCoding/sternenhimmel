@@ -105,6 +105,10 @@ void Controller::processReceivedData() {
 
   if (strcmp(cmd, CMD_GET_VERSION) == 0) {
     handleGetVersion();
+  } else if (strcmp(cmd, CMD_GET_SYSTEM_ID) == 0) {
+    handleGetSystemId();
+  } else if (strcmp(cmd, CMD_SET_SYSTEM_ID) == 0) {
+    handleSetSystemId();
   } else if (strcmp(cmd, CMD_GET_CALIBRATION_NAME) == 0) {
     handleGetCalibrationName();
   } else if (strcmp(cmd, CMD_DELETE_CALIBRATION) == 0) {
@@ -129,6 +133,36 @@ void Controller::handleGetVersion() {
 
   sendStatusResponse(0, KEY_VERSION, FIRMWARE_VERSION);
   DEBUG_INFO("CMD: '%s' [OK]", CMD_GET_VERSION);
+}
+
+void Controller::handleGetSystemId() {
+  DEBUG_INFO("CMD: '%s' [...]", CMD_GET_SYSTEM_ID);
+
+  const char* id = getSystemId();
+  ASSERT(id != nullptr);
+
+  sendStatusResponse(0, KEY_SYSTEM_ID, "%s", id);
+  DEBUG_INFO("CMD: '%s' [OK]", CMD_GET_SYSTEM_ID);
+}
+
+void Controller::handleSetSystemId() {
+  DEBUG_INFO("CMD: '%s' [...]", CMD_SET_SYSTEM_ID);
+
+  if (rx_json_doc_.containsKey(KEY_SYSTEM_ID) == false) {
+    sendStatusResponse(-1, KEY_MSG, STATUS_MSG_MISSING_KEY, KEY_SYSTEM_ID);
+    return;
+  }
+
+  const char* name = rx_json_doc_[KEY_SYSTEM_ID];
+  size_t len = strnlen(name, SystemIdMaxLength);
+  if (name == nullptr || len == 0 || len >= SystemIdMaxLength) {
+    sendStatusResponse(-1, KEY_MSG, "Invalid system ID (empty or too long)!");
+    return;
+  }
+
+  setSystemId(name);
+  sendStatusResponse(0, "", "");
+  DEBUG_INFO("CMD: '%s' [OK]", CMD_SET_SYSTEM_ID);
 }
 
 void Controller::handleGetCalibrationName() {

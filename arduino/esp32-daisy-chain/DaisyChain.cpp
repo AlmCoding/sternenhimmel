@@ -125,7 +125,7 @@ bool DaisyChain::loadCalibratedValues() {
   preferences.getBytes("calib_chain5", idle_brightness5_, sizeof(idle_brightness5_));
 
   preferences.end();
-  DEBUG_INFO("Calibration (\"%s\") loaded [OK]", calibration_name_);
+  DEBUG_INFO("Calibration '%s' loaded [OK]", calibration_name_);
   return true;
 }
 

@@ -36,6 +36,17 @@ async def async_disconnect():
     return status
 
 
+async def async_set_system_id(system_id):
+    global CONFIG_TOOL, PRINT_CB
+    assert PRINT_CB is not None, "Print callback not registered"
+    status = False
+    try:
+        status = await CONFIG_TOOL.set_system_id(system_id)
+    except Exception as e:
+        PRINT_CB(f"Error setting system ID: {e}")
+    return status
+
+
 async def async_get_info():
     global CONFIG_TOOL, PRINT_CB
     assert PRINT_CB is not None, "Print callback not registered"
@@ -45,7 +56,7 @@ async def async_get_info():
         status = info is not None
     except Exception as e:
         PRINT_CB(f"Error getting device info: {e}")
-    return status
+    return status, info
 
 
 async def async_load_config(file_path):
