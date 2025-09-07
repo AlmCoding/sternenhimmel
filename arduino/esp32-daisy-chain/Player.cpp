@@ -12,8 +12,10 @@
 
 void Player::initialize() {
   DEBUG_INFO("Initialize Player [...]");
+#if (DISABLE_HARDWARE == 0)
   pinMode(RunTogglePin, OUTPUT);
   digitalWrite(RunTogglePin, LOW);
+#endif
   last_run_ms_ = millis();
   DEBUG_INFO("Initialize Player [OK]");
 }
@@ -122,7 +124,9 @@ bool Player::isStepValid(const SequenceStep& step) const {
 void Player::run() {
   uint32_t run_delay_ms = millis() - last_run_ms_;
   last_run_ms_ = millis();
+#if (DISABLE_HARDWARE == 0)
   digitalWrite(RunTogglePin, !digitalRead(RunTogglePin));
+#endif
 
   if (state_ == State::IDLE) {
     return;

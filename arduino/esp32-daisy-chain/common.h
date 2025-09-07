@@ -1,7 +1,3 @@
-#include <BLEOTA.h>
-
-#include <BLEOTA.h>
-
 #ifndef CHAIN_CONFIG_H
 #define CHAIN_CONFIG_H
 
@@ -10,6 +6,9 @@
 #define ENABLE_DEBUG_OUTPUT 1
 constexpr char FIRMWARE_VERSION[] = "V0.0.4";
 constexpr char DIVIDER[] = "<=====================================>";
+#define DISABLE_HARDWARE 1  // Set to 1 to disable hardware specific code for BLE testing
+static_assert((ENABLE_DEBUG_OUTPUT == 0 && DISABLE_HARDWARE == 0) || (ENABLE_DEBUG_OUTPUT == 1),  //
+              "ENABLE_DEBUG_OUTPUT must be 1 if DISABLE_HARDWARE is 0");
 
 #if ENABLE_DEBUG_OUTPUT == 1
 void debugPrint(const char* prefix, const char* fmt, ...);

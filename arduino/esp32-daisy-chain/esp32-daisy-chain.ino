@@ -23,12 +23,17 @@ void setup() {
 #if (ENABLE_DEBUG_OUTPUT == 1)
   Serial.begin(921600);
 #endif
-  DEBUG_INFO("%s", DIVIDER);
+  DEBUG_INFO(DIVIDER);
   DEBUG_INFO("Setup ESP32-daisy-chain [...]");
   DEBUG_INFO("Firmware version: %s", FIRMWARE_VERSION);
   DEBUG_INFO("System id: '%s'", getSystemId());
   DEBUG_INFO("Free heap: %u bytes", ESP.getFreeHeap());
   DEBUG_INFO("CPU frequency: %d MHz", getCpuFrequencyMhz());
+#if (DISABLE_HARDWARE == 1)
+  DEBUG_INFO(DIVIDER);
+  DEBUG_INFO("Hardware specific code is DISABLED!");
+  DEBUG_INFO(DIVIDER);
+#endif
   sleep(0.25);
 
   DaisyChain::getInstance().initialize();
@@ -37,7 +42,7 @@ void setup() {
   BleManager::getInstance().initialize();
 
   DEBUG_INFO("Setup ESP32-daisy-chain [OK]");
-  DEBUG_INFO("%s", DIVIDER);
+  DEBUG_INFO(DIVIDER);
 }
 
 void loop() {
@@ -46,7 +51,9 @@ void loop() {
   Player::getInstance().run();
 
   if (Player::getInstance().isIdle() == true && (millis() - last_refresh_ms) >= RefreshIntervalMs) {
+#if (DISABLE_HARDWARE == 0)  // Only print if hardware is enabled to avoid spamming the output
     DEBUG_INFO("Periodic refresh of all chains ...");
+#endif
     last_refresh_ms = millis();
     force_refresh = true;
   }

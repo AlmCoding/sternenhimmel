@@ -11,6 +11,7 @@
 #endif
 
 DaisyChain::DaisyChain() {
+#if (DISABLE_HARDWARE == 0)
   spi_bus_config_t buscfg = { .mosi_io_num = SpiDataPin,   //
                               .miso_io_num = -1,           //
                               .sclk_io_num = SpiClockPin,  //
@@ -28,10 +29,12 @@ DaisyChain::DaisyChain() {
 
   // Add SPI device to bus
   ESP_ERROR_CHECK(spi_bus_add_device(SPI3_HOST, &devcfg, &spi_));
+#endif
 }
 
 void DaisyChain::initialize() {
   DEBUG_INFO("Initialize DaisyChain [...]");
+#if (DISABLE_HARDWARE == 0)
   pinMode(Chain0SelectPin, OUTPUT);
   pinMode(Chain1SelectPin, OUTPUT);
   pinMode(Chain2SelectPin, OUTPUT);
@@ -39,13 +42,14 @@ void DaisyChain::initialize() {
   pinMode(Chain4SelectPin, OUTPUT);
   pinMode(Chain5SelectPin, OUTPUT);
 
+  // Selecta all chains for simultaneous init
   digitalWrite(Chain0SelectPin, HIGH);
   digitalWrite(Chain1SelectPin, HIGH);
   digitalWrite(Chain2SelectPin, HIGH);
   digitalWrite(Chain3SelectPin, HIGH);
   digitalWrite(Chain4SelectPin, HIGH);
   digitalWrite(Chain5SelectPin, HIGH);
-
+#endif
   chain_.init();
   writeData();
 
@@ -307,6 +311,7 @@ void DaisyChain::selectChain(ChainIdx idx) {
 }
 
 void DaisyChain::writeData() {
+#if (DISABLE_HARDWARE == 0)
   // Send data using DMA
   spi_transaction_t trans = {};
   trans.length = chain_.getChainBufferSize() * 8;
@@ -314,6 +319,7 @@ void DaisyChain::writeData() {
   trans.rx_buffer = nullptr;
 
   ESP_ERROR_CHECK(spi_device_transmit(spi_, &trans));
+#endif
 }
 
 uint16_t DaisyChain::linearizeBrightness(BrgNumber brightness) {
