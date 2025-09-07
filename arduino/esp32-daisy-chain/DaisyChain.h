@@ -48,7 +48,7 @@ class DaisyChain {
   void setIdleLeds(LedObj leds[], size_t size);
   void loadDefaultValues();
   void applyIdleValues();
-  void flushAll();
+  void flushAll(bool force = false);
   void flushChain(ChainIdx idx, bool force = false);
   bool saveCalibratedValues(const char calibration_name[]);
   bool deleteCalibrationData();

@@ -196,13 +196,13 @@ void DaisyChain::applyIdleValues() {
   chain5_changed_ = true;
 }
 
-void DaisyChain::flushAll() {
-  flushChain(ChainIdx::CHAIN_0);
-  flushChain(ChainIdx::CHAIN_1);
-  flushChain(ChainIdx::CHAIN_2);
-  flushChain(ChainIdx::CHAIN_3);
-  flushChain(ChainIdx::CHAIN_4);
-  flushChain(ChainIdx::CHAIN_5);
+void DaisyChain::flushAll(bool force) {
+  flushChain(ChainIdx::CHAIN_0, force);
+  flushChain(ChainIdx::CHAIN_1, force);
+  flushChain(ChainIdx::CHAIN_2, force);
+  flushChain(ChainIdx::CHAIN_3, force);
+  flushChain(ChainIdx::CHAIN_4, force);
+  flushChain(ChainIdx::CHAIN_5, force);
 }
 
 void DaisyChain::flushChain(ChainIdx idx, bool force) {

@@ -13,6 +13,10 @@
 #define DEBUG_ERROR(...)
 #endif
 
+constexpr uint32_t RefreshIntervalMs = 3000;
+uint32_t last_refresh_ms = 0;
+bool force_refresh = false;
+
 void setup() {
   setCpuFrequencyMhz(240);
 
@@ -39,7 +43,14 @@ void setup() {
 void loop() {
   BleManager::getInstance().run();
   Controller::getInstance().run();
-
   Player::getInstance().run();
-  DaisyChain::getInstance().flushAll();
+
+  if (Player::getInstance().isIdle() == true && (millis() - last_refresh_ms) >= RefreshIntervalMs) {
+    DEBUG_INFO("Periodic refresh of all chains ...");
+    last_refresh_ms = millis();
+    force_refresh = true;
+  }
+
+  DaisyChain::getInstance().flushAll(force_refresh);
+  force_refresh = false;
 }
